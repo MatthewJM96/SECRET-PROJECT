@@ -36,3 +36,6 @@
 
 # VS Code Files
 .vscode/
+
+# Build artefacts
+build/
