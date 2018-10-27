@@ -56,14 +56,14 @@ set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # Add directories for compiler to search for included files.
-include_directories("${CMAKE_SOURCE_DIR}")
+include_directories("${CMAKE_SOURCE_DIR}/include")
 
 # Define the headers and sources created for the project.
 set(ATA_headers
 )
 
 set(ATA_sources
-    main.cpp
+    src/main.cpp
 )
 
 # Add an executable to be compiled and linked.
