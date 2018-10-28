@@ -16,6 +16,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
     "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    option(TARGET_X64 "Should we target 64-bit architecture? If not we taget 32-bit." Off)
     option(USING_GDB "Are we using gdb to debug?" On)
     option(EXTRA_DEBUG "Should we add extra debug symbols?" On)
     option(OPTIMISE_ON_DEBUG "Should we optimise a debug target?" On)
@@ -41,16 +42,25 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
         # Should be fine going back as far as Ubuntu 17.10, and deffo fine on Arch.
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
     endif()
+
+    if (${TARGET_X64})
+        set(RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x86_64")
+        set(LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x86_64")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64")
+    else()
+        set(RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x86")
+        set(LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x86")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+    endif()
+# Set up flags for MSVC.
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS "/Wall /WX /EHsc")
 
     set(CMAKE_CXX_FLAGS_RELEASE "/O2")
     set(CMAKE_CXX_FLAGS_DEBUG "/Od")
 endif()
-
-# Set directories for outputting the various artefacts.
-set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Include custom modules we need.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
