@@ -4,9 +4,9 @@
 BUILD_CLEAN=false
 BUILD_TYPE="Debug"
 
-# The parameter lists for CMAKE and MAKE (or equivalent build tool).
+# The parameter lists for CMAKE and the build tool of the system.
 CMAKE_PARAMS=""
-MAKE_PARAMS=""
+BUILD_PARAMS=""
 
 # Loop over each parameter passed to this script, and appropriately update the above variables.
 while test $# -gt 0
@@ -56,11 +56,11 @@ do
                 echo "Error: Saw argument --jobs (-j) but it was not followed by a number of jobs to run."
                 exit 1
             fi
-            MAKE_PARAMS="$MAKE_PARAMS -j$2"
+            BUILD_PARAMS="$BUILD_PARAMS -j$2"
             shift
             ;;
         -v|--verbose)
-            MAKE_PARAMS="$MAKE_PARAMS VERBOSE=1"
+            BUILD_PARAMS="$BUILD_PARAMS VERBOSE=1"
             ;;
         *)
             echo "Error: argument $1 not recognised."
@@ -95,4 +95,4 @@ eval "cmake -H. -Bbuild $CMAKE_PARAMS -Wno-deprecated"
 printf -- "\n\n    /------------------\\ \n    |     Building     |\n    \\------------------/\n\n\n"
 
 # Build application using build configuration.
-eval "cmake --build build -- $MAKE_PARAMS"
+eval "cmake --build build -- $BUILD_PARAMS"
