@@ -1,10 +1,14 @@
 #!/bin/bash
 
+# Some defaults we will override with settings chosen by caller.
 BUILD_CLEAN=false
 BUILD_TYPE="Debug"
+
+# The parameter lists for CMAKE and MAKE (or equivalent build tool).
 CMAKE_PARAMS=""
 MAKE_PARAMS=""
 
+# Loop over each parameter passed to this script, and appropriately update the above variables.
 while test $# -gt 0
 do
     case "$1" in
@@ -59,19 +63,22 @@ do
             MAKE_PARAMS="$MAKE_PARAMS VERBOSE=1"
             ;;
         *)
-            echo "Error: Do not recognise argument $1."
+            echo "Error: argument $1 not recognised."
             exit 1
             ;;
     esac
     shift
 done
 
+# Set correct build type after processing parameters to this script.
 if [ "$BUILD_TYPE" = "Debug" ]; then
     CMAKE_PARAMS="$CMAKE_PARAMS -DCMAKE_BUILD_TYPE=Debug"
 else
     CMAKE_PARAMS="$CMAKE_PARAMS -DCMAKE_BUILD_TYPE=Release"
 fi
 
+# If build directory exists and we want a clean build, delete all the contents of the build directory.
+# In any case, if it doesn't exist, create it.
 if [ -d "build"  ] ; then
     if [ "$BUILD_CLEAN" = true ] ; then
         rm -rf build/*
@@ -80,10 +87,12 @@ else
     mkdir build
 fi
 
-printf -- "\n    /------------------------\\ \n    |  Generating Build Env  |\n    \\------------------------/\n\n\n"
+printf -- "\n    /----------------------------------\\ \n    |  Generating Build Configuration  |\n    \\----------------------------------/\n\n\n"
 
+# Generate the build configuration. 
 eval "cmake -H. -Bbuild $CMAKE_PARAMS -Wno-deprecated"
 
 printf -- "\n\n    /------------------\\ \n    |     Building     |\n    \\------------------/\n\n\n"
 
+# Build application using build configuration.
 eval "cmake --build build -- $MAKE_PARAMS"
