@@ -8,10 +8,12 @@ PUSHD "%~dp0"
 SETLOCAL
 
 :: Some defaults we will override with settings chosen by caller.
-SET BUILD_CLEAN="false"
+SET "BUILD_CLEAN=false"
+SET "BUILD_TYPE=Debug"
 
 :: The parameter lists for CMAKE and MAKE (or equivalent build tool).
 SET "CMAKE_PARAMS="
+SET "PRE_BUILD_PARAMS="
 SET "BUILD_PARAMS="
 
 :: Jump to the loop to process parameters passed to this script.
@@ -32,15 +34,15 @@ ECHO "\n"
 GOTO ParamLoopContinue
 
 :Clean
-SET BUILD_CLEAN="true"
+SET "BUILD_CLEAN=true"
 GOTO ParamLoopContinue
 
 :Release
-SET "CMAKE_PARAMS=%CMAKE_PARAMS% -DCMAKE_BUILD_TYPE=Release"
+SET "BUILD_TYPE=Release"
 GOTO ParamLoopContinue
 
 :Debug
-SET "CMAKE_PARAMS=%CMAKE_PARAMS% -DCMAKE_BUILD_TYPE=Debug"
+SET "BUILD_TYPE=Debug"
 GOTO ParamLoopContinue
 
 :Verbose
@@ -77,8 +79,17 @@ GOTO ParamLoopContinue
     )
     :ParamLoopContinue
     SHIFT
-GOTO Argloop
+GOTO ParamLoop
 :ParamLoopBreak
+
+:: Set correct build type after processing parameters to this script.
+IF "%BUILD_TYPE%"=="Debug" (
+    SET "CMAKE_PARAMS=%CMAKE_PARAMS% -DCMAKE_BUILD_TYPE=Debug"
+    SET "PRE_BUILD_PARAMS=%PRE_BUILD_PARAMS% --config Debug"
+) ELSE (
+    SET "CMAKE_PARAMS=%CMAKE_PARAMS% -DCMAKE_BUILD_TYPE=Release"
+    SET "PRE_BUILD_PARAMS=%PRE_BUILD_PARAMS% --config Release"
+)
 
 :: If build directory exists and we want a clean build, delete all the contents of the build directory.
 :: In any case, if it doesn't exist, create it.
@@ -91,11 +102,11 @@ IF EXIST "build" (
 )
 
 :: Construct and call cmake command to generate build configuration.
-SET "CMAKE_COMMAND=cmake -H. -Bbuild %CMAKE_PARAMS% -Wno-deprecated"
+SET "CMAKE_COMMAND=cmake -H. -Bbuild %CMAKE_PARAMS% -Wno-dev"
 %CMAKE_COMMAND%
 
 :: Construct and call build command.
-SET "BUILD_COMMAND=cmake --build build -- %BUILD_PARAMS%"
+SET "BUILD_COMMAND=cmake --build build %PRE_BUILD_PARAMS% -- %BUILD_PARAMS%"
 %BUILD_COMMAND%
 
 :: Return to terminal's previous working directory.
