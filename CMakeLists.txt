@@ -14,14 +14,25 @@ project(ATextAdventure)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Set up flags for g++ and clang compilers.
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
     "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    # Specify options that can be modified on each build.
     option(USING_GDB "Are we using gdb to debug?" On)
     option(EXTRA_DEBUG "Should we add extra debug symbols?" On)
     option(OPTIMISE_ON_DEBUG "Should we optimise a debug target?" On)
 
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
+    # Add a whole bunch of warnings and specify the standard to compile against.
+    # Further, ensure that warnings are treated as errors.
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wold-style-cast -Wuseless-cast -Wshadow -Wformat=2 -std=c++17")
+    # Add some warnings that are only supported by one of g++ or clang.
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wrestrict -Wduplicated-cond")
+    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wused-but-marked-unused")
+    endif()
 
+    # Set the appropriate optimisation and debug symbol flags depending on options chosen and if we are in release or debug mode.
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
     if (${USING_GDB})
         if (${EXTRA_DEBUG})
@@ -41,16 +52,15 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
         # Should be fine going back as far as Ubuntu 17.10, and deffo fine on Arch.
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
     endif()
+# Set up flags for MSVC.
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    # Warn on everything, treat warnings as errors, use the most portable exception handling model.
     set(CMAKE_CXX_FLAGS "/Wall /WX /EHsc")
 
+    # Set optimisation flags for release and debug modes.
     set(CMAKE_CXX_FLAGS_RELEASE "/O2")
     set(CMAKE_CXX_FLAGS_DEBUG "/Od")
 endif()
-
-# Set directories for outputting the various artefacts.
-set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Include custom modules we need.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -72,9 +82,8 @@ add_executable(ATextAdventure
     ${ATA_sources}
 )
 
-include(CreateLaunchers)
-
 # Create launchers for the target.
+include(CreateLaunchers)
 create_target_launcher(ATextAdventure
     RUNTIME_LIBRARY_DIRS "${CMAKE_BINARY_DIR}"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/data"
