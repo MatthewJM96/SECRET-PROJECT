@@ -24,10 +24,10 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
 
     # Add a whole bunch of warnings and specify the standard to compile against.
     # Further, ensure that warnings are treated as errors.
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wold-style-cast -Wuseless-cast -Wshadow -Wformat=2 -std=c++17")
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wold-style-cast -Wshadow -Wformat=2 -std=c++17")
     # Add some warnings that are only supported by one of g++ or clang.
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wrestrict -Wduplicated-cond")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wrestrict -Wduplicated-cond -Wuseless-cast")
     elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wused-but-marked-unused")
     endif()
