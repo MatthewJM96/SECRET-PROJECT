@@ -54,8 +54,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
     endif()
 # Set up flags for MSVC.
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    # Warn on everything, treat warnings as errors, use the most portable exception handling model.
-    set(CMAKE_CXX_FLAGS "/Wall /WX /EHsc")
+    # Warn on (nearly) everything, treat warnings as errors, use the most portable exception handling model.
+    set(CMAKE_CXX_FLAGS "/W4 /WX /EHsc")
 
     # Set optimisation flags for release and debug modes.
     set(CMAKE_CXX_FLAGS_RELEASE "/O2")
