@@ -3,6 +3,7 @@
 # Some defaults we will override with settings chosen by caller.
 BUILD_CLEAN=false
 BUILD_TYPE="Debug"
+BUILD_TARGET="x86"
 
 # The parameter lists for CMAKE and the build tool of the system.
 CMAKE_PARAMS=""
@@ -41,7 +42,9 @@ do
             BUILD_TYPE="Debug"
             ;;
         -64|--x64)
+            BUILD_TARGET="x86_64"
             CMAKE_PARAMS="$CMAKE_PARAMS -DTARGET_X64=On"
+            ;;
         -cl|--clang)
             CMAKE_PARAMS="$CMAKE_PARAMS -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_C_COMPILER=/usr/bin/clang"
             ;;
@@ -80,22 +83,26 @@ else
     CMAKE_PARAMS="$CMAKE_PARAMS -DCMAKE_BUILD_TYPE=Release"
 fi
 
+# Define build directory based on which architecture we are targetting.
+BUILD="build_$BUILD_TARGET"
+
 # If build directory exists and we want a clean build, delete all the contents of the build directory.
 # In any case, if it doesn't exist, create it.
-if [ -d "build"  ] ; then
+if [ -d "$BUILD"  ] ; then
     if [ "$BUILD_CLEAN" = true ] ; then
-        rm -rf build/*
+        RM_TARGET="$BUILD/*"
+        rm -rf $RM_TARGET
     fi
 else
-    mkdir build
+    mkdir "$BUILD"
 fi
 
 printf -- "\n    /----------------------------------\\ \n    |  Generating Build Configuration  |\n    \\----------------------------------/\n\n\n"
 
 # Generate the build configuration. 
-eval "cmake -H. -Bbuild $CMAKE_PARAMS -Wno-deprecated"
+eval "cmake -H. -B$BUILD $CMAKE_PARAMS -Wno-deprecated"
 
 printf -- "\n\n    /------------------\\ \n    |     Building     |\n    \\------------------/\n\n\n"
 
 # Build application using build configuration.
-eval "cmake --build build -- $BUILD_PARAMS"
+eval "cmake --build $BUILD -- $BUILD_PARAMS"
