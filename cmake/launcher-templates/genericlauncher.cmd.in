@@ -1,4 +1,4 @@
-cd @USERFILE_WORKING_DIRECTORY@
+PUSHD "@USERFILE_WORKING_DIRECTORY@"
 @USERFILE_ENV_COMMANDS@
 
 IF NOT [x%1]==[x--debugger] GOTO SkipDebuggingMess
@@ -10,5 +10,7 @@ GOTO EOF
 
 :SkipDebuggingMess
 %*
+
+POPD
 
 :EOF
