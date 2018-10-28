@@ -24,32 +24,41 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
 
     # Add a whole bunch of warnings and specify the standard to compile against.
     # Further, ensure that warnings are treated as errors.
+    set(CMAKE_C_FLAGS "-Wall -Wextra -Werror -Wshadow -Wformat=2 -std=c17")
     set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wold-style-cast -Wshadow -Wformat=2 -std=c++17")
     # Add some warnings that are only supported by one of g++ or clang.
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wrestrict -Wduplicated-cond -Wuseless-cast")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wduplicated-cond")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wduplicated-cond -Wuseless-cast")
     elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wused-but-marked-unused")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wused-but-marked-unused")
     endif()
 
     # Set the appropriate optimisation and debug symbol flags depending on options chosen and if we are in release or debug mode.
+    set(CMAKE_C_FLAGS_RELEASE "-O3")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
     if (${USING_GDB})
         if (${EXTRA_DEBUG})
+            set(CMAKE_C_FLAGS_DEBUG "-ggdb3")
             set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3")
         else()
+            set(CMAKE_C_FLAGS_DEBUG "-ggdb")
             set(CMAKE_CXX_FLAGS_DEBUG "-ggdb")
         endif()
     else()
         if (${EXTRA_DEBUG})
+            set(CMAKE_C_FLAGS_DEBUG "-g3")
             set(CMAKE_CXX_FLAGS_DEBUG "-g3")
         else()
+            set(CMAKE_C_FLAGS_DEBUG "-g")
             set(CMAKE_CXX_FLAGS_DEBUG "-g")
         endif()
     endif ()
     if (${OPTIMISE_ON_DEBUG})
         # This is supported by both Clang and GCC as long as we are up-to-date.
         # Should be fine going back as far as Ubuntu 17.10, and deffo fine on Arch.
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Og")
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
     endif()
 # Set up flags for MSVC.
