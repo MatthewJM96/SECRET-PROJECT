@@ -20,6 +20,7 @@ do
             printf -- "        CMake flags:\n"
             printf -- "            --release           | -r       ---   Compile in release mode.\n"
             printf -- "            --debug             | -d       ---   Compile in debug mode.\n"
+            printf -- "            --x64               | -64      ---   Compile for x64 architecture.\n"
             printf -- "            --clang             | -cl      ---   Compiles using clang rather than gcc.\n"
             printf -- "            --no-gdb            | -ng      ---   Add OS specific debug symbols rather than GDB's.\n"
             printf -- "            --no-extra-debug    | -ned     ---   Don't add extra debug symbols.\n"
@@ -39,6 +40,8 @@ do
         -d|--debug)
             BUILD_TYPE="Debug"
             ;;
+        -64|--x64)
+            CMAKE_PARAMS="$CMAKE_PARAMS -DTARGET_X64=On"
         -cl|--clang)
             CMAKE_PARAMS="$CMAKE_PARAMS -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_C_COMPILER=/usr/bin/clang"
             ;;
