@@ -80,13 +80,13 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
     endif()
 
-    if (${TARGET_X64})
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64")
-    else()
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
-    endif()
+#    if (${TARGET_X64})
+#        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64")
+#        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64")
+#    else()
+#        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
+#        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+#    endif()
 # Set up flags for MSVC.
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     # Warn on (nearly) everything, treat warnings as errors, use the most portable exception handling model.
