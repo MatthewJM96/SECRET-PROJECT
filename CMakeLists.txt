@@ -31,32 +31,52 @@ find_package(SDL2 CONFIG REQUIRED)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Set up flags for g++ and clang compilers.
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
     "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    # Specify options that can be modified on each build.
     option(TARGET_X64 "Should we target 64-bit architecture? If not we taget 32-bit." Off)
     option(USING_GDB "Are we using gdb to debug?" On)
     option(EXTRA_DEBUG "Should we add extra debug symbols?" On)
     option(OPTIMISE_ON_DEBUG "Should we optimise a debug target?" On)
 
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
+    # Add a whole bunch of warnings and specify the standard to compile against.
+    # Further, ensure that warnings are treated as errors.
+    set(CMAKE_C_FLAGS "-Wall -Wextra -Werror -Wshadow -Wformat=2 -std=c17")
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wold-style-cast -Wshadow -Wformat=2 -std=c++17")
+    # Add some warnings that are only supported by one of g++ or clang.
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wduplicated-cond")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wduplicated-cond -Wuseless-cast")
+    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wused-but-marked-unused")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wused-but-marked-unused")
+    endif()
 
+    # Set the appropriate optimisation and debug symbol flags depending on options chosen and if we are in release or debug mode.
+    set(CMAKE_C_FLAGS_RELEASE "-O3")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
     if (${USING_GDB})
         if (${EXTRA_DEBUG})
+            set(CMAKE_C_FLAGS_DEBUG "-ggdb3")
             set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3")
         else()
+            set(CMAKE_C_FLAGS_DEBUG "-ggdb")
             set(CMAKE_CXX_FLAGS_DEBUG "-ggdb")
         endif()
     else()
         if (${EXTRA_DEBUG})
+            set(CMAKE_C_FLAGS_DEBUG "-g3")
             set(CMAKE_CXX_FLAGS_DEBUG "-g3")
         else()
+            set(CMAKE_C_FLAGS_DEBUG "-g")
             set(CMAKE_CXX_FLAGS_DEBUG "-g")
         endif()
     endif ()
     if (${OPTIMISE_ON_DEBUG})
         # This is supported by both Clang and GCC as long as we are up-to-date.
         # Should be fine going back as far as Ubuntu 17.10, and deffo fine on Arch.
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Og")
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
     endif()
 
@@ -69,8 +89,10 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
     endif()
 # Set up flags for MSVC.
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "/Wall /WX /EHsc")
+    # Warn on (nearly) everything, treat warnings as errors, use the most portable exception handling model.
+    set(CMAKE_CXX_FLAGS "/W4 /WX /EHsc")
 
+    # Set optimisation flags for release and debug modes.
     set(CMAKE_CXX_FLAGS_RELEASE "/O2")
     set(CMAKE_CXX_FLAGS_DEBUG "/Od")
 endif()
@@ -108,9 +130,8 @@ target_link_libraries(
     glm
 )
 
-include(CreateLaunchers)
-
 # Create launchers for the target.
+include(CreateLaunchers)
 create_target_launcher(SECRET_PROJECT
     RUNTIME_LIBRARY_DIRS "${CMAKE_BINARY_DIR}"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/data"
