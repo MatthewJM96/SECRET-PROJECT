@@ -37,7 +37,14 @@
 # VS Code Files
 .vscode/
 
+# VS Files
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
 # Build artefacts
 build/
 build_x86/
 build_x86_64/
+Debug/
+Release/
