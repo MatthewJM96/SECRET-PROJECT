@@ -30,9 +30,32 @@ namespace SecretProject {
 
         using ShaderAttributeMap = std::map<const char*, GLuint>;
 
+        enum class ShaderCreationResult {
+            SUCCESS       =  0,
+            NON_EDITABLE  = -1,
+            VERTEX_EXISTS = -2,
+            FRAG_EXISTS   = -3,
+            INVALID_STAGE = -4,
+            CREATE_FAIL   = -5,
+            READ_FAIL     = -6,
+            COMPILE_FAIL  = -7
+        };
+
+        struct ShaderCreationResults {
+            ShaderCreationResult vertex, fragment;
+        };
+
+        enum class ShaderLinkResult {
+            SUCCESS        =  0,
+            NON_EDITABLE   = -1,
+            VERTEX_MISSING = -2,
+            FRAG_MISSING   = -3,
+            LINK_FAIL      = -4
+        };
+
         class GLSLProgram {
         public:
-            GLSLProgram()  { /* Empty */ }
+            GLSLProgram();
             ~GLSLProgram() { /* Empty */ }
 
             /**
@@ -63,7 +86,7 @@ namespace SecretProject {
              *
              * @return True if the shader is successfully added, false otherwise.
              */
-            bool addShader(ShaderInfo shader);
+            ShaderCreationResult addShader(ShaderInfo shader);
             /**
              * @brief Adds both a vertex and a fragment shader to the program.
              *
@@ -72,30 +95,42 @@ namespace SecretProject {
              *
              * @return True if the shaders are successfully added, false otherwise.
              */
-            bool addShaders(const char* vertexPath, const char* fragmentPath);
+            ShaderCreationResults addShaders(const char* vertexPath, const char* fragmentPath);
 
             /**
              * @brief Links the shaders to the shader program.
              *
              * @return True if the shaders are successfully linked, false otherwise.
              */
-            bool link();
+            ShaderLinkResult link();
 
             /**
              * @brief Sets an attribute with the given name to the given index.
              */
-            void setAttribute(const char* name, GLuint index);
+            bool setAttribute(const char* name, GLuint index);
             /**
              * @brief Sets a set of attributes.
              */
-            void setAttributes(const ShaderAttributeMap& attributes);
+            bool setAttributes(const ShaderAttributeMap& attributes);
 
+            // TODO(Matthew): If we add shaders from source instead of filepath, could parse location of uniforms that explicitly set it using "layout(location = X)".
             GLuint getAttributeLocation(const char* name) const { return m_attributes.at(name); }
             GLuint getUniformLocation(const char* name)   const;
 
+            void enableVertexAttribArrays()  const;
+            void disableVertexAttribArrays() const;
+
+            /**
+             * @brief Uses this shader program.
+             */
+            void use();
+            /**
+             * @brief Unuses the currently used shader program.
+             */
+            static void unuse();
+
             static GLuint current;
         protected:
-
             GLuint m_id;
             GLuint m_vertexID, m_fragID;
             bool   m_isLinked;
@@ -104,6 +139,6 @@ namespace SecretProject {
         };
     }
 }
-namespace spgraphics = SecretProject::graphics;
+namespace spg = SecretProject::graphics;
 
 #endif // !defined(SP_Graphics_GLSLPogram_h__)
