@@ -1,14 +1,31 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 
 cmake_policy(SET CMP0053 NEW)
+cmake_policy(SET CMP0054 NEW)
 
 # Make sure we aren't cluttering the source folder.
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
     message(FATAL_ERROR "Don't run cmake inside the source folder!\nMake a 'build' folder and run from there.")
 endif()
 
+
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/hunter/HunterGate.cmake)
+
+HunterGate(
+    URL "https://github.com/ruslo/hunter/archive/v0.23.57.tar.gz"
+    SHA1 "8befbbaea51cb54681f6e690212ed753ae807529"
+)
+
 # Project name.
-project(ATextAdventure)
+project(SECRET_PROJECT)
+
+# Add depedencies
+hunter_add_package(glm)
+find_package(glm CONFIG REQUIRED)
+hunter_add_package(glew)
+find_package(glew CONFIG REQUIRED)
+hunter_add_package(SDL2)
+find_package(SDL2 CONFIG REQUIRED)
 
 # Set up compiler environment
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -57,25 +74,38 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # Add directories for compiler to search for included files.
 include_directories("${CMAKE_SOURCE_DIR}/include")
+include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/include")
 
 # Define the headers and sources created for the project.
-set(ATA_headers
+set(SP_headers
 )
 
-set(ATA_sources
+set(SP_sources
     src/main.cpp
 )
 
+# As we make them, create groupings by namespace - e.g. graphics, IO, UI.
+# Use source_group for these to improve Visual Studio project file creation.
+
 # Add an executable to be compiled and linked.
-add_executable(ATextAdventure
-    ${ATA_headers}
-    ${ATA_sources}
+add_executable(SECRET_PROJECT
+    ${SP_headers}
+    ${SP_sources}
+)
+
+# Target the libraries we want to link.
+target_link_libraries(
+    SECRET_PROJECT
+    SDL2::SDL2main
+    SDL2::SDL2
+    glew::glew
+    glm
 )
 
 include(CreateLaunchers)
 
 # Create launchers for the target.
-create_target_launcher(ATextAdventure
+create_target_launcher(SECRET_PROJECT
     RUNTIME_LIBRARY_DIRS "${CMAKE_BINARY_DIR}"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/data"
 )
