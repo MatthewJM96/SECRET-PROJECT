@@ -100,7 +100,7 @@ fi
 printf -- "\n    /----------------------------------\\ \n    |  Generating Build Configuration  |\n    \\----------------------------------/\n\n\n"
 
 # Generate the build configuration. 
-eval "cmake -H. -B$BUILD $CMAKE_PARAMS -Wno-deprecated"
+eval "cmake -H. -B$BUILD $CMAKE_PARAMS -Wno-deprecated -Wno-dev"
 
 printf -- "\n\n    /------------------\\ \n    |     Building     |\n    \\------------------/\n\n\n"
 
