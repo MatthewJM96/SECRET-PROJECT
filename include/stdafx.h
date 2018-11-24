@@ -13,6 +13,9 @@
 #include <iostream>
 #include <fstream>
 
+// Utilities
+#include <algorithm>
+
 // Graphics
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
