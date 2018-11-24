@@ -5,8 +5,8 @@
 
 #pragma once
 
-#if !defined(SP_Graphics_GLSLPogram_h__)
-#define SP_Graphics_GLSLPogram_h__
+#if !defined(SP_Graphics_GLSLProgram_h__)
+#define SP_Graphics_GLSLProgram_h__
 
 #include "types.h"
 
@@ -141,4 +141,4 @@ namespace SecretProject {
 }
 namespace spg = SecretProject::graphics;
 
-#endif // !defined(SP_Graphics_GLSLPogram_h__)
+#endif // !defined(SP_Graphics_GLSLProgram_h__)
