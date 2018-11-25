@@ -37,6 +37,28 @@ void spg::SpriteBatcher::init(GLenum usageHint /*= GL_STATIC_DRAW*/) {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER,         0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    /***********************************\
+     * Create a default white texture. *
+    \***********************************/
+
+    // Generate and bind texture.
+    glGenTextures(1, &m_defaultTexture);
+    glBindTexture(GL_TEXTURE_2D, m_defaultTexture);
+
+    // Set texture to be just a 1x1 image of a pure white pixel.
+    ui32 pix = 0xffffffff;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &pix);
+
+    // Set texture parameters to repeat our pixel as needed and to not do any averaging of pixels.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R,     GL_REPEAT);
+
+    // Unbind our complete texture.
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void spg::SpriteBatcher::dispose() {
@@ -55,6 +77,12 @@ void spg::SpriteBatcher::dispose() {
     if (m_vao != 0) {
         glDeleteVertexArrays(1, &m_vao);
         m_vao = 0;
+    }
+
+    // Delete our default texture.
+    if (m_defaultTexture != 0) {
+        glDeleteTextures(1, &m_defaultTexture);
+        m_defaultTexture = 0;
     }
 
     // Reset properties and stored sprites & batches.

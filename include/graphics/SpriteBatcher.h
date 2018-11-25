@@ -18,6 +18,7 @@ namespace SecretProject {
             TEXTURE
         };
 
+        // TODO(Matthew): Support textures & colours (+ gradients - easing funcs?), allowing different blending styles.
         struct Sprite {
             GLuint texture;
             f32    depth;
@@ -49,6 +50,12 @@ namespace SecretProject {
 
             void render();
         protected:
+            struct Vertex {
+                f32v3 position;
+                f32v4 uvDimensions;
+                colour4 colour;
+            };
+
             void sortSprites(SpriteSortMode sortMode);
 
             void generateBatches();
@@ -63,6 +70,8 @@ namespace SecretProject {
             GLuint m_vao, m_vbo, m_ibo;
             GLenum m_usageHint;
             ui32   m_indexCount;
+
+            ui32 m_defaultTexture;
 
             std::vector<SpriteBatch> m_batches;
         };
