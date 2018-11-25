@@ -12,6 +12,12 @@
 
 namespace SecretProject {
     namespace graphics {
+        // Forward declarations.
+        class Sprite;
+        class SpriteVertex;
+
+        using QuadBuilder = void(*)(const Sprite* sprite, SpriteVertex* vertices);
+
         enum class SpriteSortMode {
             BACK_TO_FRONT,
             FRONT_TO_BACK,
@@ -20,12 +26,21 @@ namespace SecretProject {
 
         // TODO(Matthew): Support textures & colours (+ gradients - easing funcs?), allowing different blending styles.
         struct Sprite {
-            GLuint texture;
-            f32    depth;
+            QuadBuilder build;
+            GLuint      texture;
+            f32         depth;
         };
-        
+
         struct SpriteBatch {
-            // TODO(Matthew): This is a batch of sprites sharing a texture.
+            GLuint texture;
+            ui32   indexCount;
+            ui32   indexOffset;
+        };
+
+        struct SpriteVertex {
+            f32v3 position;
+            f32v4 uvDimensions;
+            colour4 colour;
         };
 
         // TODO(Matthew): Support shader program embedding.
@@ -50,12 +65,6 @@ namespace SecretProject {
 
             void render();
         protected:
-            struct Vertex {
-                f32v3 position;
-                f32v4 uvDimensions;
-                colour4 colour;
-            };
-
             void sortSprites(SpriteSortMode sortMode);
 
             void generateBatches();

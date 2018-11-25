@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "graphics/SpriteBatcher.h"
 
+#define VERTICES_PER_QUAD 4
+#define INDICES_PER_QUAD  6
+
 spg::SpriteBatcher::SpriteBatcher() :
     m_vao(0), m_vbo(0), m_ibo(0),
     m_usageHint(GL_STATIC_DRAW),
@@ -150,11 +153,83 @@ void spg::SpriteBatcher::sortSprites(SpriteSortMode sortMode) {
 }
 
 void spg::SpriteBatcher::generateBatches() {
+    // If we have no sprites, just tell the GPU we have nothing.
     if (m_spritePtrs.empty()) {
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
         glBufferData(GL_ARRAY_BUFFER, 0, nullptr, m_usageHint);
         return;
     }
 
-    // TODO(Matthew): Complete...
+    // Create a buffer of vertices to be populated and sent to the GPU.
+    SpriteVertex* vertices = new SpriteVertex[VERTICES_PER_QUAD * m_spritePtrs.size()];
+
+    // Some counts to help us know where we're at with populating the vertices.
+    ui32 vertCount  = 0;
+    ui32 indexCount = 0;
+
+    // Create our first batch, which has 0 offset and texture the same as that of
+    // the first sprite - as it defines the first batch.
+    m_batches.emplace_back();
+    auto& batch       = m_batches.back();
+    batch.indexOffset = 0;
+    batch.texture     = m_sprites[0].texture;
+
+    // For each sprite, we want to populate the vertex buffer with those for that
+    // sprite. In the case that we are changing to a new texture, we need to 
+    // start a new batch.
+    for (auto& sprite : m_spritePtrs) {
+        // Start a new batch with texture of the sprite we're currently working with
+        // if that texture is different to the previous batch.
+        if (sprite->texture != batch.texture) {
+            // Now we are making a new batch, we can set the number of indices in 
+            // the previous batch.
+            batch.indexCount = indexCount - batch.indexOffset;
+            m_batches.emplace_back();
+
+            batch = m_batches.back();
+            batch.indexOffset = indexCount;
+            batch.texture     = sprite->texture;
+        }
+
+        // Builds the sprite's quad, i.e. adds the sprite's vertices to the vertex buffer.
+        sprite->build(sprite, vertices + vertCount);
+
+        // Update our counts.
+        vertCount  += VERTICES_PER_QUAD;
+        indexCount += INDICES_PER_QUAD;
+    }
+    batch.indexCount = indexCount - batch.indexOffset;
+
+    // If we need more indices than we have so far uploaded to the GPU, we must
+    // generate more and update the index buffer on the GPU.
+    //     For now the index pattern is the same for all sprites, as all sprites are
+    //     treated as quads. If we want to support other geometries of sprite we will
+    //     have to change this.
+    if (m_indexCount < indexCount) {
+        m_indexCount = indexCount;
+
+        // Bind the index buffer and delete the old buffer.
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indexCount * sizeof(ui32), nullptr, m_usageHint);
+
+        // Create a local index buffer we will upload to the GPU.
+        ui32* indices = new ui32[m_indexCount];
+        ui32 i = 0; // Index cursor.
+        ui32 v = 0; // Vertex cursor.
+        while (i < m_indexCount) {
+            // For each quad, we have four vertices which we write 6 indices for - giving us two triangles.
+            // The order of these indices is important - each triple should form a triangle correlating
+            // to the build functions.
+            indices[i++] = v;
+            indices[i++] = v + 2;
+            indices[i++] = v + 3;
+            indices[i++] = v + 3;
+            indices[i++] = v + 1;
+            indices[i++] = v;
+
+            v += 4;
+        }
+
+
+    }
 }
