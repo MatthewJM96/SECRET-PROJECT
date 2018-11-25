@@ -19,7 +19,3 @@
 // Graphics
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
-
-// Maths
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
