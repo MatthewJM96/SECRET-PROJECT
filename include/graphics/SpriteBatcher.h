@@ -31,7 +31,7 @@ namespace SecretProject {
         class SpriteBatcher {
             using Sprites    = std::vector<Sprite>;
             using SpritePtrs = std::vector<Sprite*>;
-            using Batches    = std::vector<Batch>;
+            using Batches    = std::vector<SpriteBatch>;
         public:
             SpriteBatcher();
             ~SpriteBatcher();
@@ -64,7 +64,7 @@ namespace SecretProject {
             GLenum m_usageHint;
             ui32   m_indexCount;
 
-            std::vector<Batch> m_batches;
+            std::vector<SpriteBatch> m_batches;
         };
     }
 }
