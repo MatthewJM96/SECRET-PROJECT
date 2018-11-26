@@ -109,14 +109,52 @@ void spg::SpriteBatcher::begin() {
     m_batches.clear();
 }
 
-void spg::SpriteBatcher::draw(/* ... */) {
+void spg::SpriteBatcher::draw(Sprite&& sprite) {
+    m_sprites.emplace_back(std::forward<Sprite>(sprite));
 
+    Sprite& sprite = m_sprites.back();
+    if (sprite.texture == 0) {
+        sprite.texture = m_defaultTexture;
+    }
+}
+
+void spg::SpriteBatcher::draw( QuadBuilder builder,
+                                    GLuint texture,
+                              const f32v2& position,
+                              const f32v2& size,
+                                       f32 depth,
+                              const f32v4& uvRect /*= f32v4(0.0f, 0.0f, 1.0f, 1.0f)*/) {
+    m_sprites.emplace_back(Sprite{
+        builder,
+        texture == 0 ? m_defaultTexture : texture,
+        position,
+        size,
+        depth,
+        uvRect
+    });
+}
+
+void spg::SpriteBatcher::draw(      GLuint texture,
+                              const f32v2& position,
+                              const f32v2& size,
+                                       f32 depth,
+                              const f32v4& uvRect /*= f32v4(0.0f, 0.0f, 1.0f, 1.0f)*/) {
+    m_sprites.emplace_back(Sprite{
+        &buildQuad,
+        texture == 0 ? m_defaultTexture : texture,
+        position,
+        size,
+        depth,
+        uvRect
+    });
 }
 
 void spg::SpriteBatcher::end(SpriteSortMode sortMode /*= SpriteSortMode::TEXTURE*/) {
     // Reserve the right amount of space to then assign a pointer for each sprite.
     if (m_spritePtrs.capacity() < m_sprites.size()) {
         m_spritePtrs.reserve(m_sprites.size());
+    } else {
+        m_spritePtrs.resize(m_sprites.size());
     }
     for (size_t i = 0; i < m_sprites.size(); ++i) {
         m_spritePtrs[i] = &m_sprites[i];
@@ -208,8 +246,10 @@ void spg::SpriteBatcher::generateBatches() {
     if (m_indexCount < indexCount) {
         m_indexCount = indexCount;
 
-        // Bind the index buffer and delete the old buffer.
+        // Bind the index buffer.
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+        // Invalidate the old buffer data on the GPU so that when we write our new data we don't
+        // need to wait for the old data to be unused by the GPU.
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indexCount * sizeof(ui32), nullptr, m_usageHint);
 
         // Create a local index buffer we will upload to the GPU.
@@ -220,16 +260,69 @@ void spg::SpriteBatcher::generateBatches() {
             // For each quad, we have four vertices which we write 6 indices for - giving us two triangles.
             // The order of these indices is important - each triple should form a triangle correlating
             // to the build functions.
-            indices[i++] = v;
-            indices[i++] = v + 2;
-            indices[i++] = v + 3;
-            indices[i++] = v + 3;
-            indices[i++] = v + 1;
-            indices[i++] = v;
+            indices[i++] = v;     // Top left vertex.
+            indices[i++] = v + 2; // Bottom left vertex.
+            indices[i++] = v + 3; // Bottom right vertex.
+            indices[i++] = v + 3; // Bottom right vertex.
+            indices[i++] = v + 1; // Top right vertex.
+            indices[i++] = v;     // Top left vertex.
 
             v += 4;
         }
 
-
+        // Send the indices over to the GPU.
+        glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, m_indexCount * sizeof(ui32), indices);
+        // Unbind our buffer object.
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
+
+    // Bind the vertex buffer and delete the old data from the GPU.
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    // Invalidate the old buffer data on the GPU so that when we write our new data we don't
+    // need to wait for the old data to be unused by the GPU.
+    glBufferData(GL_ARRAY_BUFFER, vertCount * sizeof(SpriteVertex), nullptr, m_usageHint);
+    // Write our new data.
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertCount * sizeof(SpriteVertex), vertices);
+    // Unbind our buffer object.
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Clear up memory.
+    delete[] vertices;
+}
+
+void spg::buildQuad(const Sprite* sprite, SpriteVertex* vertices) {
+    SpriteVertex& topLeft = vertices[0];
+    topLeft.position.x   = sprite->position.x;
+    topLeft.position.y   = sprite->position.y;
+    topLeft.position.z   = sprite->depth;
+    topLeft.uvTiling     = f32v2(0.0f);
+    topLeft.uvDimensions = sprite->uvDimensions;
+
+    SpriteVertex& topRight = vertices[1];
+    topRight.position.x   = sprite->position.x + sprite->size.x;
+    topRight.position.y   = sprite->position.y;
+    topRight.position.z   = sprite->depth;
+    topRight.uvTiling     = f32v2(1.0f, 0.0f);
+    topRight.uvDimensions = sprite->uvDimensions;
+
+    SpriteVertex& bottomLeft = vertices[2];
+    bottomLeft.position.x   = sprite->position.x;
+    bottomLeft.position.y   = sprite->position.y + sprite->size.y;
+    bottomLeft.position.z   = sprite->depth;
+    bottomLeft.uvTiling     = f32v2(0.0f, 1.0f);
+    bottomLeft.uvDimensions = sprite->uvDimensions;
+
+    SpriteVertex& bottomRight = vertices[3];
+    bottomRight.position.x   = sprite->position.x + sprite->size.x;
+    bottomRight.position.y   = sprite->position.y + sprite->size.y;
+    bottomRight.position.z   = sprite->depth;
+    bottomRight.uvTiling     = f32v2(1.0f, 1.0f);
+    bottomRight.uvDimensions = sprite->uvDimensions;
+
+    // TODO(Matthew): Properly calculate colours. Use a function pointer in sprite to allow custom 
+    //                colour calculation functions?
+    topLeft.colour     = colour4{255.0f, 255.0f, 255.0f, 255.0f};
+    topRight.colour    = colour4{255.0f, 255.0f, 255.0f, 255.0f};
+    bottomLeft.colour  = colour4{255.0f, 255.0f, 255.0f, 255.0f};
+    bottomRight.colour = colour4{255.0f, 255.0f, 255.0f, 255.0f};
 }

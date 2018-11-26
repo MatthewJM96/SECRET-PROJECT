@@ -28,7 +28,11 @@ namespace SecretProject {
         struct Sprite {
             QuadBuilder build;
             GLuint      texture;
+            f32v2       position;
+            f32v2       size;
             f32         depth;
+            f32v4       uvDimensions;
+            // TODO(Matthew): Colours, offsets, rotations, etc?
         };
 
         struct SpriteBatch {
@@ -38,8 +42,9 @@ namespace SecretProject {
         };
 
         struct SpriteVertex {
-            f32v3 position;
-            f32v4 uvDimensions;
+            f32v3   position;
+            f32v2   uvTiling;
+            f32v4   uvDimensions;
             colour4 colour;
         };
 
@@ -59,7 +64,18 @@ namespace SecretProject {
 
             void begin();
 
-            void draw(/* ... */);
+            void draw(Sprite&& sprite);
+            void draw( QuadBuilder builder,
+                            GLuint texture,
+                      const f32v2& position,
+                      const f32v2& size,
+                               f32 depth,
+                      const f32v4& uvRect = f32v4(0.0f, 0.0f, 1.0f, 1.0f));
+            void draw(      GLuint texture,
+                      const f32v2& position,
+                      const f32v2& size,
+                               f32 depth,
+                      const f32v4& uvRect = f32v4(0.0f, 0.0f, 1.0f, 1.0f));
 
             void end(SpriteSortMode sortMode = SpriteSortMode::TEXTURE);
 
@@ -84,6 +100,8 @@ namespace SecretProject {
 
             std::vector<SpriteBatch> m_batches;
         };
+
+        void buildQuad(const Sprite* sprite, SpriteVertex* vertices);
     }
 }
 namespace spg = SecretProject::graphics;
