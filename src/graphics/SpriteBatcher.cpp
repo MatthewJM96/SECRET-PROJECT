@@ -34,7 +34,7 @@ void spg::SpriteBatcher::init(GLenum usageHint /*= GL_STATIC_DRAW*/) {
     glBindBuffer(GL_ARRAY_BUFFER,         m_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
 
-    // TODO(Matthew): establish vertex attribute pointers for shader program.
+    // TODO(Matthew): Establish vertex attribute pointers for shader program.
 
     // Clean everything up.
     glBindVertexArray(0);
@@ -62,6 +62,8 @@ void spg::SpriteBatcher::init(GLenum usageHint /*= GL_STATIC_DRAW*/) {
 
     // Unbind our complete texture.
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    // TODO(Matthew): Establish default shader program.
 }
 
 void spg::SpriteBatcher::dispose() {
@@ -159,7 +161,7 @@ void spg::SpriteBatcher::end(SpriteSortMode sortMode /*= SpriteSortMode::TEXTURE
     for (size_t i = 0; i < m_sprites.size(); ++i) {
         m_spritePtrs[i] = &m_sprites[i];
     }
-    
+
     // Sort the sprites - we sort the vector of pointers only for speed.
     sortSprites(sortMode);
 
@@ -167,8 +169,79 @@ void spg::SpriteBatcher::end(SpriteSortMode sortMode /*= SpriteSortMode::TEXTURE
     generateBatches();
 }
 
-void spg::SpriteBatcher::render() {
-    
+void spg::SpriteBatcher::render(          const f32m4& worldProjection,
+                                          const f32m4& viewProjection,
+                                   const SamplerState* samplerState    = nullptr,
+                                     const DepthState* depthState      = nullptr,
+                                const RasterizerState* rasterizerState = nullptr,
+                                          GLSLProgram* shader          = nullptr  ) {
+        if (samplerState    == nullptr) samplerState    = &SamplerState::LINEAR_WRAP;
+        if (depthState      == nullptr) depthState      = &DepthState::NONE;
+        if (rasterizerState == nullptr) rasterizerState = &RasterizerState::CULL_NONE;
+        if (shader          == nullptr) shader          = &m_defaultShader;
+
+        // Set up necessary rendering state.
+        depthState->set();
+        rasterizerState->set();
+
+        // Activate the shader.
+        shader->use();
+
+        // Upload our projection matrices.
+        glUniformMatrix4fv(shader->getUniformLocation("worldProjection"), 1, false, &worldProjection[0][0]);
+        glUniformMatrix4fv(shader->getUniformLocation("viewProjection"),  1, false, &viewProjection[0][0]);
+
+        // Bind our vertex array.
+        glBindVertexArray(m_vao);
+
+        // Activate the zeroth texture slot in OpenGL, and pass the index to the texture uniform in our shader.
+        glActiveTexture(GL_TEXTURE0);
+        glUniform1i(shader->getUniformLocation("spriteTexture"), 0);
+
+        // For each batch, bind its texture, set the sampler state (have to do this each time), and draw the triangles in that batch.
+        for (auto& batch : m_batches) {
+            glBindTexture(GL_TEXTURE_2D, batch.texture);
+            samplerState->set();
+
+            // Note that we pass an offset as the final argument despite glDrawElements expecting a pointer as we have already uploaded
+            // the data to the buffer on the GPU - we only need to pass an offset in bytes from the beginning of this buffer rather than
+            // the address of a buffer in RAM.
+            glDrawElements(GL_TRIANGLES, batch.indexCount, GL_UNSIGNED_INT, (const GLvoid*)(batch.indexOffset * sizeof(ui32)));
+        }
+
+        // Unbind out vertex array.
+        glBindVertexArray(0);
+
+        // Deactivate our shader.
+        shader->unuse();
+}
+
+void spg::SpriteBatcher::render(          const f32m4& worldProjection,
+                                          const f32v2& screenSize,
+                                   const SamplerState* samplerState    = nullptr,
+                                     const DepthState* depthState      = nullptr,
+                                const RasterizerState* rasterizerState = nullptr,
+                                    const GLSLProgram* shader          = nullptr  ) {
+    f32m4 viewProjection = f32m4(
+         2.0f / screenSize.x,  0.0f,                0.0f, 0.0f,
+         0.0f,                -2.0f / screenSize.y, 0.0f, 0.0f,
+         0.0f,                 0.0f,                1.0f, 0.0f,
+        -1.0f,                 1.0f,                0.0f, 1.0f
+    );
+
+    render(worldProjection, viewProjection, samplerState,
+            depthState, rasterizerState, shader);
+}
+
+void spg::SpriteBatcher::render(          const f32v2& screenSize,
+                                   const SamplerState* samplerState    = nullptr,
+                                     const DepthState* depthState      = nullptr,
+                                const RasterizerState* rasterizerState = nullptr,
+                                    const GLSLProgram* shader          = nullptr  ) {
+    f32m4 identity = f32m4(1.0f);
+
+    render(identity, screenSize, samplerState,
+            depthState, rasterizerState, shader);
 }
 
 void spg::SpriteBatcher::sortSprites(SpriteSortMode sortMode) {

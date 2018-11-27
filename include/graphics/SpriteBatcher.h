@@ -9,6 +9,7 @@
 #define SP_Graphics_SpriteBatcher_h__
 
 #include "types.h"
+#include "graphics/GLSLProgram.h"
 
 namespace SecretProject {
     namespace graphics {
@@ -79,7 +80,23 @@ namespace SecretProject {
 
             void end(SpriteSortMode sortMode = SpriteSortMode::TEXTURE);
 
-            void render();
+            void render(          const f32m4& worldProjection,
+                                  const f32m4& viewProjection,
+                           const SamplerState* samplerState    = nullptr,
+                             const DepthState* depthState      = nullptr,
+                        const RasterizerState* rasterizerState = nullptr,
+                                  GLSLProgram* shader          = nullptr  );
+            void render(          const f32m4& worldProjection,
+                                  const f32v2& screenSize,
+                           const SamplerState* samplerState    = nullptr,
+                             const DepthState* depthState      = nullptr,
+                        const RasterizerState* rasterizerState = nullptr,
+                                  GLSLProgram* shader          = nullptr  );
+            void render(          const f32v2& screenSize,
+                           const SamplerState* samplerState    = nullptr,
+                             const DepthState* depthState      = nullptr,
+                        const RasterizerState* rasterizerState = nullptr,
+                                  GLSLProgram* shader          = nullptr  );
         protected:
             void sortSprites(SpriteSortMode sortMode);
 
@@ -96,7 +113,8 @@ namespace SecretProject {
             GLenum m_usageHint;
             ui32   m_indexCount;
 
-            ui32 m_defaultTexture;
+            ui32        m_defaultTexture;
+            GLSLProgram m_defaultShader;
 
             std::vector<SpriteBatch> m_batches;
         };
