@@ -25,7 +25,7 @@ namespace SecretProject {
             TEXTURE
         };
 
-        // TODO(Matthew): Support textures & colours (+ gradients - easing funcs?), allowing different blending styles.
+        // TODO(Matthew): Support colours (+ gradients - easing funcs?), allowing different blending styles.
         struct Sprite {
             QuadBuilder build;
             GLuint      texture;
@@ -44,12 +44,11 @@ namespace SecretProject {
 
         struct SpriteVertex {
             f32v3   position;
-            f32v2   uvTiling;
+            f32v2   relativePosition;
             f32v4   uvDimensions;
             colour4 colour;
         };
 
-        // TODO(Matthew): Support shader program embedding.
         class SpriteBatcher {
             using Sprites    = std::vector<Sprite>;
             using SpritePtrs = std::vector<Sprite*>;
@@ -80,23 +79,9 @@ namespace SecretProject {
 
             void end(SpriteSortMode sortMode = SpriteSortMode::TEXTURE);
 
-            void render(          const f32m4& worldProjection,
-                                  const f32m4& viewProjection,
-                           const SamplerState* samplerState    = nullptr,
-                             const DepthState* depthState      = nullptr,
-                        const RasterizerState* rasterizerState = nullptr,
-                                  GLSLProgram* shader          = nullptr  );
-            void render(          const f32m4& worldProjection,
-                                  const f32v2& screenSize,
-                           const SamplerState* samplerState    = nullptr,
-                             const DepthState* depthState      = nullptr,
-                        const RasterizerState* rasterizerState = nullptr,
-                                  GLSLProgram* shader          = nullptr  );
-            void render(          const f32v2& screenSize,
-                           const SamplerState* samplerState    = nullptr,
-                             const DepthState* depthState      = nullptr,
-                        const RasterizerState* rasterizerState = nullptr,
-                                  GLSLProgram* shader          = nullptr  );
+            void render(const f32m4& worldProjection, const f32m4& viewProjection, GLSLProgram* shader = nullptr);
+            void render(const f32m4& worldProjection, const f32v2& screenSize,     GLSLProgram* shader = nullptr);
+            void render(                              const f32v2& screenSize,     GLSLProgram* shader = nullptr);
         protected:
             void sortSprites(SpriteSortMode sortMode);
 

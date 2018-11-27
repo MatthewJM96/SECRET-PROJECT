@@ -63,7 +63,11 @@ void spg::SpriteBatcher::init(GLenum usageHint /*= GL_STATIC_DRAW*/) {
     // Unbind our complete texture.
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // TODO(Matthew): Establish default shader program.
+    // Create a default shader.
+    m_defaultShader.init();
+    // TODO(Matthew): Handle errors.
+    m_defaultShader.addShaders("shaders/DefaultSprite.vert", "shaders/DefaultSprite.frag");
+    m_defaultShader.link();
 }
 
 void spg::SpriteBatcher::dispose() {
@@ -169,39 +173,28 @@ void spg::SpriteBatcher::end(SpriteSortMode sortMode /*= SpriteSortMode::TEXTURE
     generateBatches();
 }
 
-void spg::SpriteBatcher::render(          const f32m4& worldProjection,
-                                          const f32m4& viewProjection,
-                                   const SamplerState* samplerState    = nullptr,
-                                     const DepthState* depthState      = nullptr,
-                                const RasterizerState* rasterizerState = nullptr,
-                                          GLSLProgram* shader          = nullptr  ) {
-        if (samplerState    == nullptr) samplerState    = &SamplerState::LINEAR_WRAP;
-        if (depthState      == nullptr) depthState      = &DepthState::NONE;
-        if (rasterizerState == nullptr) rasterizerState = &RasterizerState::CULL_NONE;
-        if (shader          == nullptr) shader          = &m_defaultShader;
-
-        // Set up necessary rendering state.
-        depthState->set();
-        rasterizerState->set();
+void spg::SpriteBatcher::render(const f32m4& worldProjection, const f32m4& viewProjection,
+                                    GLSLProgram* shader /*= nullptr*/) {
+        // Use the default shader if one isn't provided.
+        if (shader == nullptr) shader = &m_defaultShader;
 
         // Activate the shader.
         shader->use();
 
         // Upload our projection matrices.
-        glUniformMatrix4fv(shader->getUniformLocation("worldProjection"), 1, false, &worldProjection[0][0]);
-        glUniformMatrix4fv(shader->getUniformLocation("viewProjection"),  1, false, &viewProjection[0][0]);
+        glUniformMatrix4fv(shader->getUniformLocation("WorldProjection"), 1, false, &worldProjection[0][0]);
+        glUniformMatrix4fv(shader->getUniformLocation("ViewProjection"),  1, false, &viewProjection[0][0]);
 
         // Bind our vertex array.
         glBindVertexArray(m_vao);
 
         // Activate the zeroth texture slot in OpenGL, and pass the index to the texture uniform in our shader.
         glActiveTexture(GL_TEXTURE0);
-        glUniform1i(shader->getUniformLocation("spriteTexture"), 0);
+        glUniform1i(shader->getUniformLocation("SpriteTexture"), 0);
 
         // For each batch, bind its texture, set the sampler state (have to do this each time), and draw the triangles in that batch.
         for (auto& batch : m_batches) {
             glBindTexture(GL_TEXTURE_2D, batch.texture);
-            samplerState->set();
 
             // Note that we pass an offset as the final argument despite glDrawElements expecting a pointer as we have already uploaded
             // the data to the buffer on the GPU - we only need to pass an offset in bytes from the beginning of this buffer rather than
@@ -216,12 +209,8 @@ void spg::SpriteBatcher::render(          const f32m4& worldProjection,
         shader->unuse();
 }
 
-void spg::SpriteBatcher::render(          const f32m4& worldProjection,
-                                          const f32v2& screenSize,
-                                   const SamplerState* samplerState    = nullptr,
-                                     const DepthState* depthState      = nullptr,
-                                const RasterizerState* rasterizerState = nullptr,
-                                    const GLSLProgram* shader          = nullptr  ) {
+void spg::SpriteBatcher::render(const f32m4& worldProjection, const f32v2& screenSize,
+                                    GLSLProgram* shader /*= nullptr*/) {
     f32m4 viewProjection = f32m4(
          2.0f / screenSize.x,  0.0f,                0.0f, 0.0f,
          0.0f,                -2.0f / screenSize.y, 0.0f, 0.0f,
@@ -229,19 +218,13 @@ void spg::SpriteBatcher::render(          const f32m4& worldProjection,
         -1.0f,                 1.0f,                0.0f, 1.0f
     );
 
-    render(worldProjection, viewProjection, samplerState,
-            depthState, rasterizerState, shader);
+    render(worldProjection, viewProjection, shader);
 }
 
-void spg::SpriteBatcher::render(          const f32v2& screenSize,
-                                   const SamplerState* samplerState    = nullptr,
-                                     const DepthState* depthState      = nullptr,
-                                const RasterizerState* rasterizerState = nullptr,
-                                    const GLSLProgram* shader          = nullptr  ) {
+void spg::SpriteBatcher::render(const f32v2& screenSize, GLSLProgram* shader /*= nullptr*/) {
     f32m4 identity = f32m4(1.0f);
 
-    render(identity, screenSize, samplerState,
-            depthState, rasterizerState, shader);
+    render(identity, screenSize, shader);
 }
 
 void spg::SpriteBatcher::sortSprites(SpriteSortMode sortMode) {
@@ -365,32 +348,32 @@ void spg::SpriteBatcher::generateBatches() {
 
 void spg::buildQuad(const Sprite* sprite, SpriteVertex* vertices) {
     SpriteVertex& topLeft = vertices[0];
-    topLeft.position.x   = sprite->position.x;
-    topLeft.position.y   = sprite->position.y;
-    topLeft.position.z   = sprite->depth;
-    topLeft.uvTiling     = f32v2(0.0f);
-    topLeft.uvDimensions = sprite->uvDimensions;
+    topLeft.position.x       = sprite->position.x;
+    topLeft.position.y       = sprite->position.y;
+    topLeft.position.z       = sprite->depth;
+    topLeft.relativePosition = f32v2(0.0f, 0.0f);
+    topLeft.uvDimensions     = sprite->uvDimensions;
 
-    SpriteVertex& topRight = vertices[1];
-    topRight.position.x   = sprite->position.x + sprite->size.x;
-    topRight.position.y   = sprite->position.y;
-    topRight.position.z   = sprite->depth;
-    topRight.uvTiling     = f32v2(1.0f, 0.0f);
-    topRight.uvDimensions = sprite->uvDimensions;
+    SpriteVertex& topRight    = vertices[1];
+    topRight.position.x       = sprite->position.x + sprite->size.x;
+    topRight.position.y       = sprite->position.y;
+    topRight.position.z       = sprite->depth;
+    topRight.relativePosition = f32v2(1.0f, 0.0f);
+    topRight.uvDimensions     = sprite->uvDimensions;
 
-    SpriteVertex& bottomLeft = vertices[2];
-    bottomLeft.position.x   = sprite->position.x;
-    bottomLeft.position.y   = sprite->position.y + sprite->size.y;
-    bottomLeft.position.z   = sprite->depth;
-    bottomLeft.uvTiling     = f32v2(0.0f, 1.0f);
-    bottomLeft.uvDimensions = sprite->uvDimensions;
+    SpriteVertex& bottomLeft    = vertices[2];
+    bottomLeft.position.x       = sprite->position.x;
+    bottomLeft.position.y       = sprite->position.y + sprite->size.y;
+    bottomLeft.position.z       = sprite->depth;
+    bottomLeft.relativePosition = f32v2(0.0f, 1.0f);
+    bottomLeft.uvDimensions     = sprite->uvDimensions;
 
-    SpriteVertex& bottomRight = vertices[3];
-    bottomRight.position.x   = sprite->position.x + sprite->size.x;
-    bottomRight.position.y   = sprite->position.y + sprite->size.y;
-    bottomRight.position.z   = sprite->depth;
-    bottomRight.uvTiling     = f32v2(1.0f, 1.0f);
-    bottomRight.uvDimensions = sprite->uvDimensions;
+    SpriteVertex& bottomRight    = vertices[3];
+    bottomRight.position.x       = sprite->position.x + sprite->size.x;
+    bottomRight.position.y       = sprite->position.y + sprite->size.y;
+    bottomRight.position.z       = sprite->depth;
+    bottomRight.relativePosition = f32v2(1.0f, 1.0f);
+    bottomRight.uvDimensions     = sprite->uvDimensions;
 
     // TODO(Matthew): Properly calculate colours. Use a function pointer in sprite to allow custom 
     //                colour calculation functions?
