@@ -375,10 +375,29 @@ void spg::buildQuad(const Sprite* sprite, SpriteVertex* vertices) {
     bottomRight.relativePosition = f32v2(1.0f, 1.0f);
     bottomRight.uvDimensions     = sprite->uvDimensions;
 
-    // TODO(Matthew): Properly calculate colours. Use a function pointer in sprite to allow custom 
-    //                colour calculation functions?
-    topLeft.colour     = colour4{255.0f, 255.0f, 255.0f, 255.0f};
-    topRight.colour    = colour4{255.0f, 255.0f, 255.0f, 255.0f};
-    bottomLeft.colour  = colour4{255.0f, 255.0f, 255.0f, 255.0f};
-    bottomRight.colour = colour4{255.0f, 255.0f, 255.0f, 255.0f};
+    switch (sprite->gradient) {
+        case Gradient::LEFT_TO_RIGHT:
+            topLeft.colour  = bottomLeft.colour  = sprite->c1;
+            topRight.colour = bottomRight.colour = sprite->c2;
+            break;
+        case Gradient::TOP_TO_BOTTOM:
+            topLeft.colour    = topRight.colour    = sprite->c1;
+            bottomLeft.colour = bottomRight.colour = sprite->c2;
+            break;
+        case Gradient::TOP_LEFT_TO_BOTTOM_RIGHT:
+            topLeft.colour     = sprite->c1;
+            bottomRight.colour = sprite->c2;
+            topRight.colour    = bottomLeft.colour = lerp(sprite->c1, sprite->c2, 0.5);
+            break;
+        case Gradient::TOP_RIGHT_TO_BOTTOM_LEFT:
+            topRight.colour   = sprite->c1;
+            bottomLeft.colour = sprite->c2;
+            topLeft.colour    = bottomRight.colour = lerp(sprite->c1, sprite->c2, 0.5);
+            break;
+        case Gradient::NONE:
+            topLeft.colour = topRight.colour = bottomLeft.colour = bottomRight.colour = sprite->c1;
+        default:
+            puts("Invalid gradient type!");
+            assert(false);
+    }
 }

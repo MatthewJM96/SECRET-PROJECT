@@ -10,6 +10,7 @@
 
 #include "types.h"
 #include "graphics/GLSLProgram.h"
+#include "graphics/Gradients.hpp"
 
 namespace SecretProject {
     namespace graphics {
@@ -25,7 +26,6 @@ namespace SecretProject {
             TEXTURE
         };
 
-        // TODO(Matthew): Support colours (+ gradients - easing funcs?), allowing different blending styles.
         struct Sprite {
             QuadBuilder build;
             GLuint      texture;
@@ -33,7 +33,10 @@ namespace SecretProject {
             f32v2       size;
             f32         depth;
             f32v4       uvDimensions;
-            // TODO(Matthew): Colours, offsets, rotations, etc?
+            colour4     c1, c2;
+            Gradient    gradient;
+            // TODO(Matthew): Offsets, rotations, etc?
+            // TODO(Matthew): Custom gradients? Different blending styles?
         };
 
         struct SpriteBatch {
