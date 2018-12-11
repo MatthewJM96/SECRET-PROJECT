@@ -61,7 +61,7 @@ spg::ShaderCreationResult spg::GLSLProgram::addShader(ShaderInfo shader) {
     }
 
     // Create the shader, ready for compilation.
-    GLuint shaderID = glCreateShader((GLenum) shader.type);
+    GLuint shaderID = glCreateShader(static_cast<GLenum>(shader.type));
     if (shaderID == 0) return ShaderCreationResult::CREATE_FAIL;
 
     // Read in the shader code.
@@ -164,6 +164,8 @@ bool spg::GLSLProgram::setAttribute(const char* name, GLuint index) {
 
     glBindAttribLocation(m_id, index, name);
     m_attributes[name] = index;
+
+    return true;
 }
 
 bool spg::GLSLProgram::setAttributes(const ShaderAttributeMap& attributes) {
@@ -173,6 +175,8 @@ bool spg::GLSLProgram::setAttributes(const ShaderAttributeMap& attributes) {
         glBindAttribLocation(m_id, attribute.second, attribute.first);
         m_attributes[attribute.first] = attribute.second;
     }
+
+    return true;
 }
 
 GLuint spg::GLSLProgram::getUniformLocation(const char* name) const {

@@ -39,7 +39,7 @@ bool spio::File::readByLine(const char* filepath, std::vector<char*>& buffer) {
         line += '\n';
 
         char* linebuffer = new char[line.size() + 1];
-        memcpy(linebuffer, (void*)line.c_str(), line.size());
+        memcpy(linebuffer, reinterpret_cast<void*>(const_cast<char*>(line.c_str())), line.size());
         linebuffer[line.size()] = '\0';
 
         buffer.push_back(linebuffer);

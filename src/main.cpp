@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include <SDL2/SDL.h>
 
+#include "graphics/SpriteBatcher.h"
+
 int main() {
     SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -29,12 +31,27 @@ int main() {
     printf("*** OpenGL Version:  %s ***\n", glGetString(GL_VERSION));
     printf("*** OpenGL Renderer: %s ***\n", glGetString(GL_RENDERER));
 
+    glEnable(GL_DEPTH_TEST);
     glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+    glClearDepth(1.0);
 
     SDL_GL_SetSwapInterval(0);
 
+    spg::SpriteBatcher sb;
+    sb.init();
+    sb.reserve(10);
+
+    sb.begin();
+    for (size_t i = 0; i < 10; ++i) {
+        sb.draw(0, f32v2(20.0f * static_cast<f32>(i), 20.0f * static_cast<f32>(i)), f32v2(20.0f, 20.0f), 0.0f);
+    }
+    sb.end();
+
     while (true) {
-        glClear(GL_COLOR_BUFFER_BIT);   
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   
+
+        sb.render(f32v2(1200.0f, 800.0f));
+
         SDL_GL_SwapWindow(window);
     }
 

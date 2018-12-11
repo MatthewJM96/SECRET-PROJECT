@@ -22,7 +22,7 @@ enum class Gradient {
 
 template <typename T = f32, typename = typename std::enable_if<std::is_floating_point<T>::value>::type>
 colour3 lerp(colour3 c1, colour3 c2, T ratio) {
-    return colour3{
+    return {
         static_cast<ui8>(static_cast<T>(c1.r) * (1.0 - ratio) + static_cast<T>(c2.r) * ratio),
         static_cast<ui8>(static_cast<T>(c1.g) * (1.0 - ratio) + static_cast<T>(c2.g) * ratio),
         static_cast<ui8>(static_cast<T>(c1.b) * (1.0 - ratio) + static_cast<T>(c2.b) * ratio)
@@ -31,7 +31,7 @@ colour3 lerp(colour3 c1, colour3 c2, T ratio) {
 
 template <typename T = f32, typename = typename std::enable_if<std::is_floating_point<T>::value>::type>
 colour4 lerp(colour4 c1, colour4 c2, T ratio) {
-    return colour4{
+    return {
         static_cast<ui8>(static_cast<T>(c1.r) * (1.0 - ratio) + static_cast<T>(c2.r) * ratio),
         static_cast<ui8>(static_cast<T>(c1.g) * (1.0 - ratio) + static_cast<T>(c2.g) * ratio),
         static_cast<ui8>(static_cast<T>(c1.b) * (1.0 - ratio) + static_cast<T>(c2.b) * ratio),

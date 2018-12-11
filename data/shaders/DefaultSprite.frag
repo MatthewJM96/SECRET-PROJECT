@@ -20,7 +20,7 @@ void main() {
     //     and .zw represent the size of the rectangle growing towards the top-right.
     //     fRelativePosition is the relative position of this pixel within our Sprite's 
     //     rectangle.
-    vec4 textureCoords = + fUVDimensions.xy + fUVDimensions.zw * fRelativePosition.xy;
+    vec2 textureCoords = fract(fRelativePosition.xy) * fUVDimensions.zw + fUVDimensions.xy;
 
     // The final colour is simply calculated as the product of the colour of 
     // the texture's pixel and the "tint" colour to be applied to that point 

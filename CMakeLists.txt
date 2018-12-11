@@ -112,13 +112,31 @@ set(SP_sources
     src/main.cpp
 )
 
-# As we make them, create groupings by namespace - e.g. graphics, IO, UI.
-# Use source_group for these to improve Visual Studio project file creation.
+set(SP_graphics
+    include/graphics/GLSLProgram.h
+    include/graphics/Gradients.hpp
+    include/graphics/SpriteBatcher.h
+# Source
+    src/graphics/GLSLProgram.cpp
+    src/graphics/SpriteBatcher.cpp
+)
+
+set(SP_io
+    include/io/FileLoader.h
+# Source
+    src/io/FileLoader.cpp
+)
+
+# As we make them, create groupings by namespace - e.g. graphics, IO, UI to improve Visual Studio project file creation.
+source_group("graphics" FILES ${SP_graphics})
+source_group("io" FILES ${SP_io})
 
 # Add an executable to be compiled and linked.
 add_executable(SECRET_PROJECT
     ${SP_headers}
     ${SP_sources}
+    ${SP_graphics}
+    ${SP_io}
 )
 
 # Target the libraries we want to link.

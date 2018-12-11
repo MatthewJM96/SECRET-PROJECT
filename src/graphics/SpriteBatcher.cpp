@@ -63,6 +63,10 @@ void spg::SpriteBatcher::init(GLenum usageHint /*= GL_STATIC_DRAW*/) {
     // Unbind our complete texture.
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    /*****************************\
+     * Create a default shader . *
+    \*****************************/
+
     // Create a default shader.
     m_defaultShader.init();
     // TODO(Matthew): Handle errors.
@@ -118,9 +122,9 @@ void spg::SpriteBatcher::begin() {
 void spg::SpriteBatcher::draw(Sprite&& sprite) {
     m_sprites.emplace_back(std::forward<Sprite>(sprite));
 
-    Sprite& sprite = m_sprites.back();
-    if (sprite.texture == 0) {
-        sprite.texture = m_defaultTexture;
+    Sprite& spriteRef = m_sprites.back();
+    if (spriteRef.texture == 0) {
+        spriteRef.texture = m_defaultTexture;
     }
 }
 
@@ -136,7 +140,10 @@ void spg::SpriteBatcher::draw( QuadBuilder builder,
         position,
         size,
         depth,
-        uvRect
+        uvRect,
+        colour4{ 128, 128, 0, 255 },
+        colour4{ 128, 128, 0, 255 },
+        Gradient::NONE
     });
 }
 
@@ -151,7 +158,10 @@ void spg::SpriteBatcher::draw(      GLuint texture,
         position,
         size,
         depth,
-        uvRect
+        uvRect,
+        colour4{ 128, 128, 0, 255 },
+        colour4{ 128, 128, 0, 255 },
+        Gradient::NONE
     });
 }
 
@@ -199,7 +209,7 @@ void spg::SpriteBatcher::render(const f32m4& worldProjection, const f32m4& viewP
             // Note that we pass an offset as the final argument despite glDrawElements expecting a pointer as we have already uploaded
             // the data to the buffer on the GPU - we only need to pass an offset in bytes from the beginning of this buffer rather than
             // the address of a buffer in RAM.
-            glDrawElements(GL_TRIANGLES, batch.indexCount, GL_UNSIGNED_INT, (const GLvoid*)(batch.indexOffset * sizeof(ui32)));
+            glDrawElements(GL_TRIANGLES, batch.indexCount, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid*>(batch.indexOffset * sizeof(ui32)));
         }
 
         // Unbind out vertex array.
@@ -347,7 +357,7 @@ void spg::SpriteBatcher::generateBatches() {
 }
 
 void spg::buildQuad(const Sprite* sprite, SpriteVertex* vertices) {
-    SpriteVertex& topLeft = vertices[0];
+    SpriteVertex& topLeft    = vertices[0];
     topLeft.position.x       = sprite->position.x;
     topLeft.position.y       = sprite->position.y;
     topLeft.position.z       = sprite->depth;
@@ -396,6 +406,7 @@ void spg::buildQuad(const Sprite* sprite, SpriteVertex* vertices) {
             break;
         case Gradient::NONE:
             topLeft.colour = topRight.colour = bottomLeft.colour = bottomRight.colour = sprite->c1;
+            break;
         default:
             puts("Invalid gradient type!");
             assert(false);

@@ -95,6 +95,13 @@ struct colour3 {
         ui8 data[3];
     };
 
+    colour3() :
+        r(0), g(0), b(0)
+    { /* Empty */ }
+    constexpr colour3(ui8 r_, ui8 g_, ui8 b_) :
+        r(r_), g(g_), b(b_)
+    { /* Empty */ }
+
     bool operator==(const colour3& rhs) const {
         return r == rhs.r
             && g == rhs.g
@@ -115,6 +122,13 @@ struct colour4 {
         };
         ui8 data[4];
     };
+
+    colour4() :
+        r(0), g(0), b(0), a(0)
+    { /* Empty */ }
+    constexpr colour4(ui8 r_, ui8 g_, ui8 b_, ui8 a_) :
+        r(r_), g(g_), b(b_), a(a_)
+    { /* Empty */ }
 
     bool operator==(const colour4& rhs) const {
         return r == rhs.r

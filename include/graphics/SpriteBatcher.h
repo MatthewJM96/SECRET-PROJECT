@@ -8,6 +8,9 @@
 #if !defined(SP_Graphics_SpriteBatcher_h__)
 #define SP_Graphics_SpriteBatcher_h__
 
+#include <map>
+#include <vector>
+
 #include "types.h"
 #include "graphics/GLSLProgram.h"
 #include "graphics/Gradients.hpp"
@@ -15,8 +18,8 @@
 namespace SecretProject {
     namespace graphics {
         // Forward declarations.
-        class Sprite;
-        class SpriteVertex;
+        struct Sprite;
+        struct SpriteVertex;
 
         using QuadBuilder = void(*)(const Sprite* sprite, SpriteVertex* vertices);
 

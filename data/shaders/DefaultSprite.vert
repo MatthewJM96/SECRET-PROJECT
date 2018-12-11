@@ -23,5 +23,5 @@ void main() {
 
     // Calculate the position of this vertex on the screen.
     vec4 worldPosition = WorldProjection * vPosition;
-    gl_Position = ViewProjection = * worldPosition;
+    gl_Position = ViewProjection * worldPosition;
 }
