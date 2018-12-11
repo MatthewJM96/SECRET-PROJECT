@@ -18,6 +18,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
     "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     # Specify options that can be modified on each build.
+    option(TARGET_X64 "Should we target 64-bit architecture? If not we taget 32-bit." Off)
     option(USING_GDB "Are we using gdb to debug?" On)
     option(EXTRA_DEBUG "Should we add extra debug symbols?" On)
     option(OPTIMISE_ON_DEBUG "Should we optimise a debug target?" On)
@@ -61,6 +62,15 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
         set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Og")
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
     endif()
+
+    if (${TARGET_X64})
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64")
+    else()
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+    endif()
+
 # Set up flags for MSVC.
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     # Warn on (nearly) everything, treat warnings as errors, use the most portable exception handling model.
