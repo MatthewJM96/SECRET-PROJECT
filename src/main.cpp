@@ -32,7 +32,7 @@ int main() {
     printf("*** OpenGL Renderer: %s ***\n", glGetString(GL_RENDERER));
 
     glEnable(GL_DEPTH_TEST);
-    glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+    glClearColor(0.2f, 0.7f, 0.3f, 1.0f);
     glClearDepth(1.0);
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
