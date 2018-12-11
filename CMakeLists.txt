@@ -26,6 +26,8 @@ hunter_add_package(glew)
 find_package(glew CONFIG REQUIRED)
 hunter_add_package(SDL2)
 find_package(SDL2 CONFIG REQUIRED)
+hunter_add_package(SDL_ttf)
+find_package(SDL_ttf CONFIG REQUIRED)
 
 # Set up compiler environment
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -144,6 +146,7 @@ target_link_libraries(
     SECRET_PROJECT
     SDL2::SDL2main
     SDL2::SDL2
+    SDL_ttf::SDL_ttf
     glew::glew
     glm
 )

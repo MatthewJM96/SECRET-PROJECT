@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <SDL2/SDL.h>
+#include <SDL_ttf/SDL_ttf.h>
 
 #include "graphics/SpriteBatcher.h"
 
@@ -35,10 +36,15 @@ int main() {
         return -2;
     }
 
+    // Initialise library for loading, manipulating, and drawing fonts.
+    if (TTF_Init() < 0) {
+        return -3;
+    }
+
     // Initialise wrapper of OpenGL - this provides all the functions we call in the OpenGL library.
     GLenum error = glewInit();
     if (error != GLEW_OK) {
-        return -3;
+        return -4;
     }
 
     printf("*** OpenGL Version:  %s ***\n", glGetString(GL_VERSION));
