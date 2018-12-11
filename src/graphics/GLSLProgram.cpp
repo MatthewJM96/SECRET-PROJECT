@@ -198,6 +198,24 @@ void spg::GLSLProgram::disableVertexAttribArrays() const {
     }
 }
 
+bool spg::GLSLProgram::enableVertexAttribArray(const char* name) const {
+    try {
+        glEnableVertexAttribArray(m_attributes.at(name));
+    } catch (std::out_of_range e) {
+        return false;
+    }
+    return true;
+}
+
+bool spg::GLSLProgram::disableVertexAttribArray(const char* name) const {
+    try {
+        glDisableVertexAttribArray(m_attributes.at(name));
+    } catch (std::out_of_range e) {
+        return false;
+    }
+    return true;
+}
+
 void spg::GLSLProgram::use() {
     if (!isInUse()) {
         glUseProgram(m_id);

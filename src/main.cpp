@@ -35,6 +35,7 @@ int main() {
     glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
     glClearDepth(1.0);
 
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetSwapInterval(0);
 
     spg::SpriteBatcher sb;
@@ -43,7 +44,7 @@ int main() {
 
     sb.begin();
     for (size_t i = 0; i < 10; ++i) {
-        sb.draw(0, f32v2(20.0f * static_cast<f32>(i), 20.0f * static_cast<f32>(i)), f32v2(20.0f, 20.0f), 0.0f);
+        sb.draw(0, f32v2(40.0f * static_cast<f32>(i), 40.0f * static_cast<f32>(i)), f32v2(40.0f, 40.0f), { static_cast<ui8>(20 * i), 50, 128, 255 });
     }
     sb.end();
 

@@ -55,6 +55,14 @@ namespace SecretProject {
             colour4 colour;
         };
 
+        enum SpriteShaderAttribID : GLuint {
+            POSITION = 0,
+            RELATIVE_POSITION,
+            UV_DIMENSIONS,
+            COLOUR,
+            SpriteShaderAttribID_SENTINEL
+        };
+
         class SpriteBatcher {
             using Sprites    = std::vector<Sprite>;
             using SpritePtrs = std::vector<Sprite*>;
@@ -75,16 +83,23 @@ namespace SecretProject {
                             GLuint texture,
                       const f32v2& position,
                       const f32v2& size,
-                               f32 depth,
-                      const f32v4& uvRect = f32v4(0.0f, 0.0f, 1.0f, 1.0f));
+                           colour4 c1       = { 255, 255, 255, 255 },
+                           colour4 c2       = { 255, 255, 255, 255 },
+                          Gradient gradient = Gradient::NONE,
+                               f32 depth    = 0.0f,
+                      const f32v4& uvRect   = f32v4(0.0f, 0.0f, 1.0f, 1.0f));
             void draw(      GLuint texture,
                       const f32v2& position,
                       const f32v2& size,
-                               f32 depth,
-                      const f32v4& uvRect = f32v4(0.0f, 0.0f, 1.0f, 1.0f));
+                           colour4 c1       = { 255, 255, 255, 255 },
+                           colour4 c2       = { 255, 255, 255, 255 },
+                          Gradient gradient = Gradient::NONE,
+                               f32 depth    = 0.0f,
+                      const f32v4& uvRect   = f32v4(0.0f, 0.0f, 1.0f, 1.0f));
 
             void end(SpriteSortMode sortMode = SpriteSortMode::TEXTURE);
 
+            // TODO(Matthew): Move specifying custom shader out to being a setter - it needs to be prepared!
             void render(const f32m4& worldProjection, const f32m4& viewProjection, GLSLProgram* shader = nullptr);
             void render(const f32m4& worldProjection, const f32v2& screenSize,     GLSLProgram* shader = nullptr);
             void render(                              const f32v2& screenSize,     GLSLProgram* shader = nullptr);

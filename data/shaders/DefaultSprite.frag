@@ -26,5 +26,6 @@ void main() {
     // the texture's pixel and the "tint" colour to be applied to that point 
     // on the sprite.
     //    Note: At some point fColour will be converted from unsigned byte to float, as it is used to multiply texture it is likely normalising this to be in [0, 1].
+    // For now we don't give any alpha output from here, in the future we will want to, to support transparent sprites.
     finalColour = texture(SpriteTexture, textureCoords) * fColour;
 }

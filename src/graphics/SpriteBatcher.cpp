@@ -18,6 +18,26 @@ spg::SpriteBatcher::~SpriteBatcher() {
 void spg::SpriteBatcher::init(GLenum usageHint /*= GL_STATIC_DRAW*/) {
     m_usageHint = usageHint;
 
+    /*****************************\
+     * Create a default shader . *
+    \*****************************/
+
+    // Create a default shader program.
+    m_defaultShader.init();
+
+    // Set each attribute's corresponding index.
+    m_defaultShader.setAttribute("vPosition",         SpriteShaderAttribID::POSITION);
+    m_defaultShader.setAttribute("vRelativePosition", SpriteShaderAttribID::RELATIVE_POSITION);
+    m_defaultShader.setAttribute("vUVDimensions",     SpriteShaderAttribID::UV_DIMENSIONS);
+    m_defaultShader.setAttribute("vColour",           SpriteShaderAttribID::COLOUR);
+
+    // TODO(Matthew): Handle errors.
+    // Add the shaders to the program.
+    m_defaultShader.addShaders("shaders/DefaultSprite.vert", "shaders/DefaultSprite.frag");
+
+    // Link program (i.e. send to GPU).
+    m_defaultShader.link();
+
     /******************\
      * Create the VAO *
     \******************/
@@ -26,17 +46,35 @@ void spg::SpriteBatcher::init(GLenum usageHint /*= GL_STATIC_DRAW*/) {
     glGenVertexArrays(1, &m_vao);
     glBindVertexArray(m_vao);
 
-    // Generate the associated vertex & index buffers.
+    // Generate the associated vertex & index buffers - these are the bits of memory that will be populated within the GPU storing information
+    // about the graphics we want to draw.
     glGenBuffers(1, &m_vbo);
     glGenBuffers(1, &m_ibo);
 
-    // Bind those buffers.
+    // Bind those buffers
+    //    OpenGL generally follows a pattern of generate an ID corresponding to some memory on the GPU, bind said memory, link some properties to them 
+    //    (such as how the data in the memory correspond to variables inside our shader programs).
     glBindBuffer(GL_ARRAY_BUFFER,         m_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
 
-    // TODO(Matthew): Establish vertex attribute pointers for shader program.
+    // Enable the attributes in our shader.
+    m_defaultShader.enableVertexAttribArrays();
 
-    // Clean everything up.
+    // Connect the vertex attributes in the shader (e.g. vPosition) to its corresponding chunk of memory inside the SpriteVertex struct.
+    //     We first tell OpenGL the ID of the attribute within the shader (as we set earlier), then the number of values and their type.
+    //
+    //     After that, we tell OpenGL whether that data is normalised (e.g. unsigned bytes that are not normalised will be divided through 
+    //     by 255 and converted to a float by OpenGL - so that colours, e.g., are represented by values between 0.0f and 1.0f per R/G/B/A 
+    //     channel rather than the usual 0 to 255).
+    //
+    //     We then pass the size of the data representing a vertex followed by how many bytes into that data the value is stored - we use offset rather than 
+    //     manually writing this to give us flexibility in changing the order of the SpriteVertex struct.
+    glVertexAttribPointer(SpriteShaderAttribID::POSITION,          3, GL_FLOAT,         false, sizeof(SpriteVertex), reinterpret_cast<void*>(offsetof(SpriteVertex, position)));
+    glVertexAttribPointer(SpriteShaderAttribID::RELATIVE_POSITION, 2, GL_FLOAT,         false, sizeof(SpriteVertex), reinterpret_cast<void*>(offsetof(SpriteVertex, relativePosition)));
+    glVertexAttribPointer(SpriteShaderAttribID::UV_DIMENSIONS,     4, GL_FLOAT,         false, sizeof(SpriteVertex), reinterpret_cast<void*>(offsetof(SpriteVertex, uvDimensions)));
+    glVertexAttribPointer(SpriteShaderAttribID::COLOUR,            4, GL_UNSIGNED_BYTE, false, sizeof(SpriteVertex), reinterpret_cast<void*>(offsetof(SpriteVertex, colour)));
+
+    // Clean everything up, unbinding each of our buffers and the vertex array.
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER,         0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -62,16 +100,6 @@ void spg::SpriteBatcher::init(GLenum usageHint /*= GL_STATIC_DRAW*/) {
 
     // Unbind our complete texture.
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    /*****************************\
-     * Create a default shader . *
-    \*****************************/
-
-    // Create a default shader.
-    m_defaultShader.init();
-    // TODO(Matthew): Handle errors.
-    m_defaultShader.addShaders("shaders/DefaultSprite.vert", "shaders/DefaultSprite.frag");
-    m_defaultShader.link();
 }
 
 void spg::SpriteBatcher::dispose() {
@@ -132,8 +160,11 @@ void spg::SpriteBatcher::draw( QuadBuilder builder,
                                     GLuint texture,
                               const f32v2& position,
                               const f32v2& size,
-                                       f32 depth,
-                              const f32v4& uvRect /*= f32v4(0.0f, 0.0f, 1.0f, 1.0f)*/) {
+                                   colour4 c1       /*= { 255, 255, 255, 255 }*/,
+                                   colour4 c2       /*= { 255, 255, 255, 255 }*/,
+                                  Gradient gradient /*= Gradient::NONE*/,
+                                       f32 depth    /*= 0.0f*/,
+                              const f32v4& uvRect   /*= f32v4(0.0f, 0.0f, 1.0f, 1.0f)*/) {
     m_sprites.emplace_back(Sprite{
         builder,
         texture == 0 ? m_defaultTexture : texture,
@@ -141,17 +172,20 @@ void spg::SpriteBatcher::draw( QuadBuilder builder,
         size,
         depth,
         uvRect,
-        colour4{ 128, 128, 0, 255 },
-        colour4{ 128, 128, 0, 255 },
-        Gradient::NONE
+        c1,
+        c2,
+        gradient
     });
 }
 
 void spg::SpriteBatcher::draw(      GLuint texture,
                               const f32v2& position,
                               const f32v2& size,
-                                       f32 depth,
-                              const f32v4& uvRect /*= f32v4(0.0f, 0.0f, 1.0f, 1.0f)*/) {
+                                   colour4 c1       /*= { 255, 255, 255, 255 }*/,
+                                   colour4 c2       /*= { 255, 255, 255, 255 }*/,
+                                  Gradient gradient /*= Gradient::NONE*/,
+                                       f32 depth    /*= 0.0f*/,
+                              const f32v4& uvRect   /*= f32v4(0.0f, 0.0f, 1.0f, 1.0f)*/) {
     m_sprites.emplace_back(Sprite{
         &buildQuad,
         texture == 0 ? m_defaultTexture : texture,
@@ -159,9 +193,9 @@ void spg::SpriteBatcher::draw(      GLuint texture,
         size,
         depth,
         uvRect,
-        colour4{ 128, 128, 0, 255 },
-        colour4{ 128, 128, 0, 255 },
-        Gradient::NONE
+        c1,
+        c2,
+        gradient
     });
 }
 

@@ -119,6 +119,8 @@ namespace SecretProject {
 
             void enableVertexAttribArrays()  const;
             void disableVertexAttribArrays() const;
+            bool enableVertexAttribArray(const char* name)  const;
+            bool disableVertexAttribArray(const char* name) const;
 
             /**
              * @brief Uses this shader program.
