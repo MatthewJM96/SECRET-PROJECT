@@ -63,16 +63,16 @@ void spg::SpriteBatcher::init(GLenum usageHint /*= GL_STATIC_DRAW*/) {
     // Connect the vertex attributes in the shader (e.g. vPosition) to its corresponding chunk of memory inside the SpriteVertex struct.
     //     We first tell OpenGL the ID of the attribute within the shader (as we set earlier), then the number of values and their type.
     //
-    //     After that, we tell OpenGL whether that data is normalised (e.g. unsigned bytes that are not normalised will be divided through 
-    //     by 255 and converted to a float by OpenGL - so that colours, e.g., are represented by values between 0.0f and 1.0f per R/G/B/A 
-    //     channel rather than the usual 0 to 255).
+    //     After that, we tell OpenGL whether that data should be normalised (e.g. unsigned bytes that need normalising will be converted 
+    //     to a float divided through by 255.0f and by OpenGL - so that colours, e.g., are represented by values between 0.0f and 1.0f 
+    //     per R/G/B/A channel rather than the usual 0 to 255).
     //
     //     We then pass the size of the data representing a vertex followed by how many bytes into that data the value is stored - we use offset rather than 
     //     manually writing this to give us flexibility in changing the order of the SpriteVertex struct.
     glVertexAttribPointer(SpriteShaderAttribID::POSITION,          3, GL_FLOAT,         false, sizeof(SpriteVertex), reinterpret_cast<void*>(offsetof(SpriteVertex, position)));
     glVertexAttribPointer(SpriteShaderAttribID::RELATIVE_POSITION, 2, GL_FLOAT,         false, sizeof(SpriteVertex), reinterpret_cast<void*>(offsetof(SpriteVertex, relativePosition)));
     glVertexAttribPointer(SpriteShaderAttribID::UV_DIMENSIONS,     4, GL_FLOAT,         false, sizeof(SpriteVertex), reinterpret_cast<void*>(offsetof(SpriteVertex, uvDimensions)));
-    glVertexAttribPointer(SpriteShaderAttribID::COLOUR,            4, GL_UNSIGNED_BYTE, false, sizeof(SpriteVertex), reinterpret_cast<void*>(offsetof(SpriteVertex, colour)));
+    glVertexAttribPointer(SpriteShaderAttribID::COLOUR,            4, GL_UNSIGNED_BYTE, true,  sizeof(SpriteVertex), reinterpret_cast<void*>(offsetof(SpriteVertex, colour)));
 
     // Clean everything up, unbinding each of our buffers and the vertex array.
     glBindVertexArray(0);
