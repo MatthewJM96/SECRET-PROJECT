@@ -13,8 +13,8 @@
 
 namespace SecretProject {
     namespace graphics {
-        const char FIRST_PRINTABLE_CHAR = static_cast<char>(32);
-        const char LAST_PRINTABLE_CHAR  = static_cast<char>(126);
+        const char FIRST_PRINTABLE_CHAR = 32;
+        const char LAST_PRINTABLE_CHAR  = 126;
 
         /**
          * @brief Type used for font size in exposed APIs.
