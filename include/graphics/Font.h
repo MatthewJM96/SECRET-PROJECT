@@ -57,6 +57,14 @@ namespace SecretProject {
 
         /**
          * @brief Data for an instance of a font with specific render style, and font style and size.
+         *
+         * Each font instance consists of a texture which contains each glyph (character) in
+         * the font drawn in the size, style and render style specified for the instance. In
+         * addition to this texture, it contains a parameter defining the height of the
+         * tallest character, as well as an array of metadata for each glyph.
+         *     The metadata, Glyph, stores the character, the UV coordinates withing the
+         *     texture of the glyph the metadata represents, and the size of the glyph in
+         *     pixels.
          */
         struct FontInstance {
             GLuint texture;
