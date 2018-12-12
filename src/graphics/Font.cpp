@@ -1,7 +1,19 @@
 #include "stdafx.h"
 #include "graphics/Font.h"
 
+/**
+ * @brief Determines the next power of 2 after the given value and returns it.
+ *
+ * @param The value to determine the following power of 2 for.
+ *
+ * @return The power of 2 determined.
+ */
 ui32 nextPower2(ui32 value) {
+    // This is a rather lovely bit manipulation function.
+    // Essentially, all we're doing in this is up until the return
+    // statement we take a value like 0110110000110101101 and change 
+    // it to become 0111111111111111111 so that when we add 1 (i.e.
+    // 0000000000000000001) it becomes 1000000000000000000.
     --value;
     value |= value >> 1;
     value |= value >> 2;
@@ -54,7 +66,7 @@ bool spg::Font::generate(       FontSize size,
     if (font == nullptr) return false;
 
     // Set the font style.
-    TTF_SetFontStyle(font, style);
+    TTF_SetFontStyle(font, static_cast<int>(style));
 
     // Store the height of the tallest glyph for the given font size.
     fontInstance.height = TTF_FontHeight(font);
@@ -65,11 +77,10 @@ bool spg::Font::generate(       FontSize size,
     for (size_t i = 0, char c = m_begin; c <= m_end; ++c) {
         fontInstance.glyphs[i].character = c;
 
-        i32 advance;
         i32v4 metrics;
 
         TTF_GlyphMetrics(font, c, &metrics.x, &metrics.y,
-                                  &metrics.z, &metrics.w, &advance);
+                                  &metrics.z, &metrics.w, nullptr);
 
         fontInstance.glyphs[i].size.x = metrics.z - metrics.x;
         fontInstance.glyphs[i].size.y = metrics.w - metrics.y;
@@ -98,9 +109,16 @@ bool spg::Font::generate(       FontSize size,
         currentWidth  = nextPower2(currentWidth);
         currentHeight = nextPower2(currentHeight);
 
+        // TODO(Matthew): Pretty sure that this isn't actually getting the maximum
+        //                size of one dimension, rather the maximum area allowed
+        //                after squaring this value.
+        // Get maximum texture size allowed by implementation.
+        GLint maxTextureSize;
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+
         // If current width exceeds the maximum OpenGL texture size (and current height does not),
         // then try adding another row.
-        if (currentWidth > GL_MAX_TEXTURE_SIZE && currentHeight < GL_MAX_TEXTURE_SIZE) {
+        if (currentWidth > maxTextureSize && currentHeight < maxTextureSize) {
             ++rowCount;
             delete[] currentRows;
             continue;
@@ -119,7 +137,7 @@ bool spg::Font::generate(       FontSize size,
 
             // If current height exceeds the maximum OpenGL texture size then there's no point
             // considering adding another row.
-            if (currentHeight > GL_MAX_TEXTURE_SIZE) {
+            if (currentHeight > maxTextureSize) {
                 delete[] currentRows;
                 break;
             }
@@ -191,7 +209,6 @@ bool spg::Font::generate(       FontSize size,
     // Insert our font instance.
     m_fontInstances.emplace(std::make_pair(hash(size, style, renderStyle), fontInstance));
 }
-
 
 spg::FontInstance& getFontInstance(       FontSize size,
                                          FontStyle style       /*= FontStyle::NORMAL*/,
