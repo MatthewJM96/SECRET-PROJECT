@@ -14,7 +14,7 @@ bool spio::File::read(const char* filepath, char*& buffer) {
     size -= file.tellg();
 
     // Construct buffer of appropriate size.
-    buffer = new char[size + 1];
+    buffer = new char[static_cast<size_t>(size) + 1];
 
     // Read in file to buffer, null-terminating the string.
     file.read(buffer, size);

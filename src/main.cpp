@@ -16,7 +16,7 @@
 //     Displaying - where we send the framebuffer we previously created and send it to be displayed by the monitor.
 // All of our graphics functions should use the above naming conventions for clarity.
 
-int main() {
+int main(int, char*[]) {
     // Prepares SDL library, which handles windows and user input.
     SDL_Init(SDL_INIT_EVERYTHING);
 
