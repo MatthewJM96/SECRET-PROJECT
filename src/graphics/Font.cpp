@@ -13,7 +13,8 @@ ui32 nextPower2(ui32 value) {
     // Essentially, all we're doing in this is up until the return
     // statement we take a value like 0110110000110101101 and change 
     // it to become 0111111111111111111 so that when we add 1 (i.e.
-    // 0000000000000000001) it becomes 1000000000000000000.
+    // 0000000000000000001) it becomes 1000000000000000000 -> the
+    // next power of 2!
     --value;
     value |= value >> 1;
     value |= value >> 2;
