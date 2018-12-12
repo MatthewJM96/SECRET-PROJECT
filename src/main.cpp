@@ -9,12 +9,12 @@
 #include "graphics/SpriteBatcher.h"
 
 // Rendering is roughly split into three steps (each of which has potentially many sub-steps):
-//     Drawing    - where we create objects with properties like size, position, colour, etc. in RAM.
-//     Rendering  - where we send what we previously drew to the GPU and pass it through shaders to create a framebuffer.
-//     Displaying - where we send the framebuffer we previously created and pass it to the window, to be displayed by the monitor.
-// Note: The names I gave are only useful now for getting the process straight, often rendering and drawing refer to (the same) processes
-// performed on the GPU when used by people familiar with graphics.
-//     Note^2: All functions in our code will use the above naming conventions, for clarity.
+//     Drawing    - where we construct objects with properties like size, position, colour, etc. in RAM likely passing to a
+//                  buffer in the GPU's memory.
+//     Rendering  - where we send what we previously drew to the GPU if we haven't already, and then pass it through shaders
+//                  to create a framebuffer (an array of all the colours for every pixel to be displayed on our monitors).
+//     Displaying - where we send the framebuffer we previously created and send it to be displayed by the monitor.
+// All of our graphics functions should use the above naming conventions for clarity.
 
 int main() {
     // Prepares SDL library, which handles windows and user input.
