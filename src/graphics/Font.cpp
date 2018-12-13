@@ -334,6 +334,18 @@ spg::FontInstance spg::FontCache::fetchFontInstance(const char* name, FontSize s
     return font->getFontInstance(size, style, renderStyle);
 }
 
+spg::FontInstance spg::FontCache::fetchFontInstance(const char* name, FontStyle style = FontStyle::NORMAL, FontRenderStyle renderStyle = FontRenderStyle::BLENDED) {
+    // Make sure a font exists with the given name.
+    auto font = m_fonts.find(name);
+    if (font == m_fonts.end()) return NIL_FONT_INSTANCE;
+
+    // Generate the specified font instance if it doesn't exist.
+    font->generate(style, renderStyle);
+
+    // Return the font instance.
+    return font->getFontInstance(style, renderStyle);
+}
+
 // These are just a set of functions to let us use bit-masking for FontStyle.
 //     That is to say, we can do things like:
 //         FontStyle::BOLD | FontStyle::ITALIC

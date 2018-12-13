@@ -121,6 +121,8 @@ set(SP_graphics_include
     include/graphics/GLSLProgram.h
     include/graphics/Gradients.hpp
     include/graphics/SpriteBatcher.h
+    include/graphics/TextAlign.hpp
+    include/graphics/WordWrap.hpp
 )
 
 set(SP_graphics_src

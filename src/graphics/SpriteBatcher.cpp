@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "graphics/SpriteBatcher.h"
 
+#include "graphics/Font.h"
+
 #define VERTICES_PER_QUAD 4
 #define INDICES_PER_QUAD  6
 
@@ -15,7 +17,8 @@ spg::SpriteBatcher::~SpriteBatcher() {
     /* Empty */
 }
 
-void spg::SpriteBatcher::init(GLenum usageHint /*= GL_STATIC_DRAW*/) {
+void spg::SpriteBatcher::init(FontCache* fontCache, GLenum usageHint /*= GL_STATIC_DRAW*/) {
+    m_fontCache = fontCache;
     m_usageHint = usageHint;
 
     /*****************************\
@@ -197,6 +200,44 @@ void spg::SpriteBatcher::draw(      GLuint texture,
         c2,
         gradient
     });
+}
+
+void spg::SpriteBatcher::drawString(    const char* str,
+                                              f32v4 rect,
+                                              f32v2 scaling,
+                                            colour4 tint,
+                                        const char* fontName,
+                                           FontSize fontSize,
+                                          TextAlign align       /*= TextAlign::TOP_LEFT*/,
+                                           WordWrap wrap        /*= WordWrap::NONE*/,
+                                                f32 depth       /*= 0.0f*/,
+                                          FontStyle style       /*= FontStyle::NORMAL*/,
+                                    FontRenderStyle renderStyle /*= FontRenderStyle::BLENDED*/) {
+    drawString(str, rect, scaling, tint, m_fontCache.fetchFontInstance(name, fontSize, style, renderStyle), align, wrap, depth);
+}
+void spg::SpriteBatcher::drawString(    const char* str,
+                                              f32v4 rect,
+                                              f32v2 scaling,
+                                            colour4 tint,
+                                        const char* fontName,
+                                          TextAlign align       /*= TextAlign::TOP_LEFT*/,
+                                           WordWrap wrap        /*= WordWrap::NONE*/,
+                                                f32 depth       /*= 0.0f*/,
+                                          FontStyle style       /*= FontStyle::NORMAL*/,
+                                    FontRenderStyle renderStyle /*= FontRenderStyle::BLENDED*/) {
+    drawString(str, rect, scaling, tint, m_fontCache.fetchFontInstance(name, style, renderStyle), align, wrap, depth);
+}
+void spg::SpriteBatcher::drawString( const char* str,
+                                           f32v4 rect,
+                                           f32v2 scaling,
+                                         colour4 tint,
+                                    FontInstance fontInstance,
+                                       TextAlign align /*= TextAlign::TOP_LEFT*/,
+                                        WordWrap wrap  /*= WordWrap::NONE*/,
+                                             f32 depth /*= 0.0f*/) {
+    if (fontInstace == NIL_FONT_INSTANCE) return;
+
+    // TODO(Matthew): Implement actual string draw. (OH GOD PLEASE HELP ME)
 }
 
 void spg::SpriteBatcher::end(SpriteSortMode sortMode /*= SpriteSortMode::TEXTURE*/) {

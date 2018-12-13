@@ -121,6 +121,9 @@ namespace SecretProject {
              * @param size The padding to use to space out the glyphs to be drawn.
              * @param style The style of the font itself.
              * @param renderStyle The style with which the font should be rendered.
+             *
+             * @return True if a font instance was created, false indicates the font instance with the given
+             * properties already existed.
              */
             bool generate(       FontSize size,
                                  FontSize padding,
@@ -137,6 +140,9 @@ namespace SecretProject {
              * @param size The size of the glyphs to be drawn.
              * @param style The style of the font itself.
              * @param renderStyle The style with which the font should be rendered.
+             *
+             * @return True if a font instance was created, false indicates the font instance with the given
+             * properties already existed.
              */
             bool generate(       FontSize size,
                                 FontStyle style       = FontStyle::NORMAL,
@@ -147,9 +153,16 @@ namespace SecretProject {
              * @brief Generates a texture atlas of glyphs with the default render style, font style and font size.
              *
              * Note that all textures are of white glyphs, use shaders to tint them!
+             *
+             * @param style The style of the font itself.
+             * @param renderStyle The style with which the font should be rendered.
+             *
+             * @return True if a font instance was created, false indicates the font instance with the given
+             * properties already existed.
              */
-            bool generate() {
-                return generate(m_defaultSize);
+            bool generate(      FontStyle style       = FontStyle::NORMAL,
+                          FontRenderStyle renderStyle = FontRenderStyle::BLENDED ) {
+                return generate(m_defaultSize, style, renderStyle);
             }
 
             /**
@@ -166,6 +179,22 @@ namespace SecretProject {
             FontInstance getFontInstance(       FontSize size,
                                                FontStyle style       = FontStyle::NORMAL,
                                          FontRenderStyle renderStyle = FontRenderStyle::BLENDED );
+            /**
+             * @brief Returns the font instance corresponding to the given size, style and render
+             * style.
+             *
+             * This version uses the default size of this font.
+             *
+             * @param style The font style.
+             * @param renderStyle The font render style.
+             *
+             * @return The font instance corresponding to the given size, style and render style,
+             * or NIL_FONT_INSTANCE if no font instance exists with the given
+             */
+            FontInstance getFontInstance(      FontStyle style       = FontStyle::NORMAL,
+                                         FontRenderStyle renderStyle = FontRenderStyle::BLENDED ) {
+                return getFontInstance(m_defaultSize, style, renderStyle);
+            }
         protected:
             /**
              * @brief Generates as many rows of glyphs as requested, ensuring 
@@ -229,10 +258,51 @@ namespace SecretProject {
              * @return The font instance requested, or NIL_FONT_INSTANCE if it couldn't be obtained.
              */
             FontInstance fetchFontInstance(const char* name, FontSize size, FontStyle style = FontStyle::NORMAL, FontRenderStyle renderStyle = FontRenderStyle::BLENDED);
+            /**
+             * @brief Fetches an instance of the named font with the given size and style. If the instance does not
+             * yet exist, it is first created.
+             *
+             * @param name The name of the font to get an instance of.
+             * @param filepath The filepath of the font to get an instance of.
+             * @param size The size of the instance to get.
+             * @param style The font style of the instance to get.
+             * @param renderStyle The render style of the instance to get.
+             *
+             * @return The font instance requested, or NIL_FONT_INSTANCE if it couldn't be obtained.
+             */
             FontInstance fetchFontInstance(const char* name, const char* filepath, FontSize size, FontStyle style = FontStyle::NORMAL, FontRenderStyle renderStyle = FontRenderStyle::BLENDED) {
                 registerFont(name, filepath);
 
                 return fetchFontInstance(name, size, style, renderStyle);
+            }
+            /**
+             * @brief Fetches an instance of the named font with the given size and style. If the instance does not
+             * yet exist, it is first created.
+             *
+             * @param name The name of the font to get an instance of.
+             * @param size The size of the instance to get.
+             * @param style The font style of the instance to get.
+             * @param renderStyle The render style of the instance to get.
+             *
+             * @return The font instance requested, or NIL_FONT_INSTANCE if it couldn't be obtained.
+             */
+            FontInstance fetchFontInstance(const char* name, FontStyle style = FontStyle::NORMAL, FontRenderStyle renderStyle = FontRenderStyle::BLENDED);
+            /**
+             * @brief Fetches an instance of the named font with the given size and style. If the instance does not
+             * yet exist, it is first created.
+             *
+             * @param name The name of the font to get an instance of.
+             * @param filepath The filepath of the font to get an instance of.
+             * @param size The size of the instance to get.
+             * @param style The font style of the instance to get.
+             * @param renderStyle The render style of the instance to get.
+             *
+             * @return The font instance requested, or NIL_FONT_INSTANCE if it couldn't be obtained.
+             */
+            FontInstance fetchFontInstance(const char* name, const char* filepath, FontStyle style = FontStyle::NORMAL, FontRenderStyle renderStyle = FontRenderStyle::BLENDED) {
+                registerFont(name, filepath);
+
+                return fetchFontInstance(name, style, renderStyle);
             }
         protected:
             Fonts m_fonts;
