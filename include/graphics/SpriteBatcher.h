@@ -193,7 +193,7 @@ namespace SecretProject {
              *
              * @param str The string to draw.
              * @param rect The rectangle in which to draw the string.
-             * @param scaling The scaling of the font.
+             * @param sizing The sizing of the font.
              * @param tint The colour to give the string.
              * @param fontName The name of the font to use.
              * @param fontSize The size of the font to use.
@@ -205,7 +205,7 @@ namespace SecretProject {
              */
             void drawString(    const char* str,
                                       f32v4 rect,
-                                      f32v2 scaling,
+                               StringSizing sizing,
                                     colour4 tint,
                                 const char* fontName,
                                    FontSize fontSize,
@@ -222,7 +222,7 @@ namespace SecretProject {
              *
              * @param str The string to draw.
              * @param rect The rectangle in which to draw the string.
-             * @param scaling The scaling of the font.
+             * @param sizing The sizing of the font.
              * @param tint The colour to give the string.
              * @param fontName The name of the font to use.
              * @param align The alignment to use for the string.
@@ -233,7 +233,7 @@ namespace SecretProject {
              */
             void drawString(    const char* str,
                                       f32v4 rect,
-                                      f32v2 scaling,
+                               StringSizing sizing,
                                     colour4 tint,
                                 const char* fontName,
                                   TextAlign align       = TextAlign::TOP_LEFT,
@@ -249,7 +249,7 @@ namespace SecretProject {
              *
              * @param str The string to draw.
              * @param rect The rectangle in which to draw the string.
-             * @param scaling The scaling of the font.
+             * @param sizing The sizing of the font.
              * @param tint The colour to give the string.
              * @param fontInstnace The instance of the font to use.
              * @param align The alignment to use for the string.
@@ -258,7 +258,7 @@ namespace SecretProject {
              */
             void drawString( const char* str,
                                    f32v4 rect,
-                                   f32v2 scaling,
+                            StringSizing sizing,
                                  colour4 tint,
                             FontInstance fontInstance,
                                TextAlign align = TextAlign::TOP_LEFT,

@@ -74,11 +74,33 @@ namespace SecretProject {
         const FontInstance NIL_FONT_INSTANCE = { 0, 0, nullptr };
 
         /**
+         * @brief Whether the string should be sized (vertically) by a scale factor or target a fixed pixel height.
+         */
+        enum class StringSizingKind {
+            SCALED,
+            FIXED
+        };
+
+        /**
+         * @brief The properties defining the sizing.
+         */
+        struct StringSizing {
+            StringSizingKind kind;
+            union {
+                f32v2 scaling;
+                struct {
+                    f32 scaleX;
+                    f32 targetHeight;
+                };
+            };
+        };
+
+        /**
          * @brief Properties needed to draw a string.
          */
         struct StringDrawProperties {
             FontInstance fontInstance;
-            f32v2        scaling;
+            StringSizing sizing;
             colour4      tint;
         };
         using StringComponents = std::vector<std::pair<const char*, StringDrawProperties>>;

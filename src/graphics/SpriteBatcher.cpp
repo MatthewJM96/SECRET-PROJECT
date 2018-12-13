@@ -204,7 +204,7 @@ void spg::SpriteBatcher::draw(      GLuint texture,
 
 void spg::SpriteBatcher::drawString(    const char* str,
                                               f32v4 rect,
-                                              f32v2 scaling,
+                                       StringSizing sizing,
                                             colour4 tint,
                                         const char* fontName,
                                            FontSize fontSize,
@@ -213,11 +213,11 @@ void spg::SpriteBatcher::drawString(    const char* str,
                                                 f32 depth       /*= 0.0f*/,
                                           FontStyle style       /*= FontStyle::NORMAL*/,
                                     FontRenderStyle renderStyle /*= FontRenderStyle::BLENDED*/) {
-    drawString(str, rect, scaling, tint, m_fontCache->fetchFontInstance(fontName, fontSize, style, renderStyle), align, wrap, depth);
+    drawString(str, rect, sizing, tint, m_fontCache->fetchFontInstance(fontName, fontSize, style, renderStyle), align, wrap, depth);
 }
 void spg::SpriteBatcher::drawString(    const char* str,
                                               f32v4 rect,
-                                              f32v2 scaling,
+                                       StringSizing sizing,
                                             colour4 tint,
                                         const char* fontName,
                                           TextAlign align       /*= TextAlign::TOP_LEFT*/,
@@ -225,11 +225,11 @@ void spg::SpriteBatcher::drawString(    const char* str,
                                                 f32 depth       /*= 0.0f*/,
                                           FontStyle style       /*= FontStyle::NORMAL*/,
                                     FontRenderStyle renderStyle /*= FontRenderStyle::BLENDED*/) {
-    drawString(str, rect, scaling, tint, m_fontCache->fetchFontInstance(fontName, style, renderStyle), align, wrap, depth);
+    drawString(str, rect, sizing, tint, m_fontCache->fetchFontInstance(fontName, style, renderStyle), align, wrap, depth);
 }
 void spg::SpriteBatcher::drawString( const char* str,
                                            f32v4 rect,
-                                           f32v2 scaling,
+                                    StringSizing sizing,
                                          colour4 tint,
                                     FontInstance fontInstance,
                                        TextAlign align /*= TextAlign::TOP_LEFT*/,
@@ -237,7 +237,7 @@ void spg::SpriteBatcher::drawString( const char* str,
                                              f32 depth /*= 0.0f*/) {
     if (fontInstance == NIL_FONT_INSTANCE) return;
 
-    StringComponents components { std::make_pair(str, StringDrawProperties{ fontInstance, scaling, tint }) };
+    StringComponents components { std::make_pair(str, StringDrawProperties{ fontInstance, sizing, tint }) };
 
     drawString(components, rect, align, wrap, depth);
 }
