@@ -213,7 +213,7 @@ void spg::SpriteBatcher::drawString(    const char* str,
                                                 f32 depth       /*= 0.0f*/,
                                           FontStyle style       /*= FontStyle::NORMAL*/,
                                     FontRenderStyle renderStyle /*= FontRenderStyle::BLENDED*/) {
-    drawString(str, rect, scaling, tint, m_fontCache.fetchFontInstance(name, fontSize, style, renderStyle), align, wrap, depth);
+    drawString(str, rect, scaling, tint, m_fontCache->fetchFontInstance(fontName, fontSize, style, renderStyle), align, wrap, depth);
 }
 void spg::SpriteBatcher::drawString(    const char* str,
                                               f32v4 rect,
@@ -225,7 +225,7 @@ void spg::SpriteBatcher::drawString(    const char* str,
                                                 f32 depth       /*= 0.0f*/,
                                           FontStyle style       /*= FontStyle::NORMAL*/,
                                     FontRenderStyle renderStyle /*= FontRenderStyle::BLENDED*/) {
-    drawString(str, rect, scaling, tint, m_fontCache.fetchFontInstance(name, style, renderStyle), align, wrap, depth);
+    drawString(str, rect, scaling, tint, m_fontCache->fetchFontInstance(fontName, style, renderStyle), align, wrap, depth);
 }
 void spg::SpriteBatcher::drawString( const char* str,
                                            f32v4 rect,
@@ -235,8 +235,16 @@ void spg::SpriteBatcher::drawString( const char* str,
                                        TextAlign align /*= TextAlign::TOP_LEFT*/,
                                         WordWrap wrap  /*= WordWrap::NONE*/,
                                              f32 depth /*= 0.0f*/) {
-    if (fontInstace == NIL_FONT_INSTANCE) return;
+    if (fontInstance == NIL_FONT_INSTANCE) return;
 
+    // This is a trick to make the compiler think we use these parameters - good to temporarily hide warnings.
+    (void) str;
+    (void) rect;
+    (void) scaling;
+    (void) tint;
+    (void) align;
+    (void) wrap;
+    (void) depth;
     // TODO(Matthew): Implement actual string draw. (OH GOD PLEASE HELP ME)
 }
 

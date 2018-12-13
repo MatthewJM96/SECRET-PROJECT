@@ -322,28 +322,42 @@ bool spg::FontCache::registerFont(const char* name, const char* filepath) {
     return false;
 }
 
-spg::FontInstance spg::FontCache::fetchFontInstance(const char* name, FontSize size, FontStyle style = FontStyle::NORMAL, FontRenderStyle renderStyle = FontRenderStyle::BLENDED) {
+spg::FontInstance spg::FontCache::fetchFontInstance(    const char* name,
+                                                           FontSize size,
+                                                          FontStyle style       /*= FontStyle::NORMAL*/,
+                                                    FontRenderStyle renderStyle /*= FontRenderStyle::BLENDED*/) {
     // Make sure a font exists with the given name.
     auto font = m_fonts.find(name);
     if (font == m_fonts.end()) return NIL_FONT_INSTANCE;
 
     // Generate the specified font instance if it doesn't exist.
-    font->generate(size, style, renderStyle);
+    font->second.generate(size, style, renderStyle);
 
     // Return the font instance.
-    return font->getFontInstance(size, style, renderStyle);
+    return font->second.getFontInstance(size, style, renderStyle);
 }
 
-spg::FontInstance spg::FontCache::fetchFontInstance(const char* name, FontStyle style = FontStyle::NORMAL, FontRenderStyle renderStyle = FontRenderStyle::BLENDED) {
+spg::FontInstance spg::FontCache::fetchFontInstance(    const char* name,
+                                                          FontStyle style       /*= FontStyle::NORMAL*/,
+                                                    FontRenderStyle renderStyle /*= FontRenderStyle::BLENDED*/) {
     // Make sure a font exists with the given name.
     auto font = m_fonts.find(name);
     if (font == m_fonts.end()) return NIL_FONT_INSTANCE;
 
     // Generate the specified font instance if it doesn't exist.
-    font->generate(style, renderStyle);
+    font->second.generate(style, renderStyle);
 
     // Return the font instance.
-    return font->getFontInstance(style, renderStyle);
+    return font->second.getFontInstance(style, renderStyle);
+}
+
+bool operator==(const spg::FontInstance& lhs, const spg::FontInstance& rhs) {
+    return (lhs.texture == rhs.texture &&
+            lhs.height  == rhs.height  &&
+            lhs.glyphs  == rhs.glyphs);
+}
+bool operator!=(const spg::FontInstance& lhs, const spg::FontInstance& rhs) {
+    return !(lhs == rhs);
 }
 
 // These are just a set of functions to let us use bit-masking for FontStyle.

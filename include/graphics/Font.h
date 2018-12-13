@@ -311,6 +311,9 @@ namespace SecretProject {
 }
 namespace spg = SecretProject::graphics;
 
+bool operator==(const spg::FontInstance& lhs, const spg::FontInstance& rhs);
+bool operator!=(const spg::FontInstance& lhs, const spg::FontInstance& rhs);
+
 // These are just a set of functions to let us use bit-masking for FontStyle.
 //     That is to say, we can do things like:
 //         FontStyle::BOLD | FontStyle::ITALIC

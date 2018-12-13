@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "types.h"
+#include "graphics/Font.h"
 #include "graphics/GLSLProgram.h"
 #include "graphics/Gradients.hpp"
 #include "graphics/TextAlign.hpp"
@@ -20,7 +21,6 @@
 namespace SecretProject {
     namespace graphics {
         // Forward declarations.
-        class  FontCache;
         struct Sprite;
         struct SpriteVertex;
 

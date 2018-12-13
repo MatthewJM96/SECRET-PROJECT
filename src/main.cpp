@@ -68,7 +68,7 @@ int main(int, char*[]) {
 
     // Create a test sprite batcher, initialise it and reserve space for 10 sprites.
     spg::SpriteBatcher sb;
-    sb.init();
+    sb.init(nullptr); // TODO(Matthew): Actually give it a font cache!
     sb.reserve(10);
 
     // Begin the drawing mode of the sprite batcher, draw 10 sprites, then end the draw mode - at which point the sprites are sorted and turned into batches for rendering.
