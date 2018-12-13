@@ -237,11 +237,19 @@ void spg::SpriteBatcher::drawString( const char* str,
                                              f32 depth /*= 0.0f*/) {
     if (fontInstance == NIL_FONT_INSTANCE) return;
 
+    StringComponents components { std::make_pair(str, StringDrawProperties{ fontInstance, scaling, tint }) };
+
+    drawString(components, rect, align, wrap, depth);
+}
+
+void spg::SpriteBatcher::drawString(StringComponents components,
+                                               f32v4 rect,
+                                           TextAlign align /*= TextAlign::TOP_LEFT*/,
+                                            WordWrap wrap  /*= WordWrap::NONE*/,
+                                                 f32 depth /*= 0.0f*/) {
     // This is a trick to make the compiler think we use these parameters - good to temporarily hide warnings.
-    (void) str;
+    (void) components;
     (void) rect;
-    (void) scaling;
-    (void) tint;
     (void) align;
     (void) wrap;
     (void) depth;
@@ -266,13 +274,30 @@ void spg::SpriteBatcher::end(SpriteSortMode sortMode /*= SpriteSortMode::TEXTURE
     generateBatches();
 }
 
-void spg::SpriteBatcher::render(const f32m4& worldProjection, const f32m4& viewProjection,
-                                    GLSLProgram* shader /*= nullptr*/) {
-        // Use the default shader if one isn't provided.
-        if (shader == nullptr) shader = &m_defaultShader;
+bool spg::SpriteBatcher::setShader(GLSLProgram* shader /*= nullptr*/) {
+    if (shader == nullptr) {
+        m_activeShader = &m_defaultShader;
+    } else {
+        if (!shader->isInitialised()) return;
 
+        if (!shader->isLinked()) {
+            shader->setAttribute("vPosition",         SpriteShaderAttribID::POSITION);
+            shader->setAttribute("vRelativePosition", SpriteShaderAttribID::RELATIVE_POSITION);
+            shader->setAttribute("vUVDimensions",     SpriteShaderAttribID::UV_DIMENSIONS);
+            shader->setAttribute("vColour",           SpriteShaderAttribID::COLOUR);
+
+            if (shader->link() != ShaderLinkResult::SUCCESS) return false;
+        }
+
+        m_activeShader = shader;
+    }
+
+    return true;
+}
+
+void spg::SpriteBatcher::render(const f32m4& worldProjection, const f32m4& viewProjection) {
         // Activate the shader.
-        shader->use();
+        m_activeShader->use();
 
         // Upload our projection matrices.
         glUniformMatrix4fv(shader->getUniformLocation("WorldProjection"), 1, false, &worldProjection[0][0]);
@@ -299,11 +324,10 @@ void spg::SpriteBatcher::render(const f32m4& worldProjection, const f32m4& viewP
         glBindVertexArray(0);
 
         // Deactivate our shader.
-        shader->unuse();
+        m_activeShader->unuse();
 }
 
-void spg::SpriteBatcher::render(const f32m4& worldProjection, const f32v2& screenSize,
-                                    GLSLProgram* shader /*= nullptr*/) {
+void spg::SpriteBatcher::render(const f32m4& worldProjection, const f32v2& screenSize) {
     f32m4 viewProjection = f32m4(
          2.0f / screenSize.x,  0.0f,                0.0f, 0.0f,
          0.0f,                -2.0f / screenSize.y, 0.0f, 0.0f,
@@ -311,13 +335,13 @@ void spg::SpriteBatcher::render(const f32m4& worldProjection, const f32v2& scree
         -1.0f,                 1.0f,                0.0f, 1.0f
     );
 
-    render(worldProjection, viewProjection, shader);
+    render(worldProjection, viewProjection);
 }
 
-void spg::SpriteBatcher::render(const f32v2& screenSize, GLSLProgram* shader /*= nullptr*/) {
+void spg::SpriteBatcher::render(const f32v2& screenSize) {
     f32m4 identity = f32m4(1.0f);
 
-    render(identity, screenSize, shader);
+    render(identity, screenSize);
 }
 
 void spg::SpriteBatcher::sortSprites(SpriteSortMode sortMode) {
