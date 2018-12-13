@@ -38,6 +38,8 @@ spg::FontInstanceHash spg::hash(FontSize size, FontStyle style, FontRenderStyle 
 }
 
 spg::Font::Font() :
+    m_filepath(nullptr),
+    m_start(0), m_end(0),
     m_defaultSize(0)
 { /* Empty. */ }
 
@@ -48,19 +50,29 @@ void spg::Font::init(const char* filepath, char start, char end) {
 }
 
 void spg::Font::dispose() {
-    // TODO(Matthew): Properly dispose of font instances.
+    for (auto& fontInstance : m_fontInstances) {
+        if (fontInstance.second.texture != 0) {
+            glDeleteTextures(1, &fontInstance.second.texture);
+        }
+        if (fontInstance.second.glyphs != nullptr) {
+            delete[] fontInstance.second.glyphs;
+        }
+    }
 
-    FontInstanceMap.swap(m_fontInstances);
+    FontInstanceMap().swap(m_fontInstances);
 }
 
 bool spg::Font::generate(       FontSize size,
                                 FontSize padding,
                                FontStyle style       /*= FontStyle::NORMAL*/,
-                         FontRenderStyle renderStyle /*= FontRenderStyle::SHADED*/) {
+                         FontRenderStyle renderStyle /*= FontRenderStyle::BLENDED*/) {
+    // Make sure this is a new instance we are generating.
+    if (getFontInstance(size, style, renderStyle) != NIL_FONT_INSTANCE) return false;
+
     // This is the font instance we will build up as we generate the texture atlas.
     FontInstance fontInstance{};
     // Create the glyphs array for this font instance.
-    fontInstance.glyphs = new Glyph[m_end - m_begin];
+    fontInstance.glyphs = new Glyph[m_end - m_start];
 
     // Open the font and check we didn't fail.
     TTF_Font* font = TTF_OpenFont(m_filepath, size);
@@ -75,18 +87,21 @@ bool spg::Font::generate(       FontSize size,
     // For each character, we are going to get the glyph metrics - that is the set of
     // properties that constitute begin and end positions of the glyph - and calculate
     // each glyph's size.
-    for (size_t i = 0, char c = m_begin; c <= m_end; ++c) {
-        fontInstance.glyphs[i].character = c;
+    {
+        size_t i = 0;
+        for (char c = m_start; c <= m_end; ++c) {
+            fontInstance.glyphs[i].character = c;
 
-        i32v4 metrics;
+            i32v4 metrics;
 
-        TTF_GlyphMetrics(font, c, &metrics.x, &metrics.y,
-                                  &metrics.z, &metrics.w, nullptr);
+            TTF_GlyphMetrics(font, c, &metrics.x, &metrics.y,
+                                    &metrics.z, &metrics.w, nullptr);
 
-        fontInstance.glyphs[i].size.x = metrics.z - metrics.x;
-        fontInstance.glyphs[i].size.y = metrics.w - metrics.y;
+            fontInstance.glyphs[i].size.x = metrics.z - metrics.x;
+            fontInstance.glyphs[i].size.y = metrics.w - metrics.y;
 
-        ++i;
+            ++i;
+        }
     }
 
     // Our texture atlas of all the glyphs in the font is going to have multiple rows.
@@ -99,7 +114,7 @@ bool spg::Font::generate(       FontSize size,
     ui32 bestArea     = std::numeric_limits<ui32>::max();
     ui32 bestRowCount = 0;
     Row* bestRows = nullptr;
-    while (rowCount <= m_end - m_begin) {
+    while (rowCount <= static_cast<ui32>(m_end - m_start)) {
         // Generate rows for the current row count, getting the width and height of the rectangle
         // they form.
         ui32 currentWidth, currentHeight;
@@ -112,14 +127,15 @@ bool spg::Font::generate(       FontSize size,
 
         // TODO(Matthew): Pretty sure that this isn't actually getting the maximum
         //                size of one dimension, rather the maximum area allowed
-        //                after squaring this value.
+        //                after squaring this value. If so, we should revisit this
+        //                loop!
         // Get maximum texture size allowed by implementation.
         GLint maxTextureSize;
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 
         // If current width exceeds the maximum OpenGL texture size (and current height does not),
         // then try adding another row.
-        if (currentWidth > maxTextureSize && currentHeight < maxTextureSize) {
+        if (currentWidth > static_cast<ui32>(maxTextureSize) && currentHeight < static_cast<ui32>(maxTextureSize)) {
             ++rowCount;
             delete[] currentRows;
             continue;
@@ -138,7 +154,7 @@ bool spg::Font::generate(       FontSize size,
 
             // If current height exceeds the maximum OpenGL texture size then there's no point
             // considering adding another row.
-            if (currentHeight > maxTextureSize) {
+            if (currentHeight > static_cast<ui32>(maxTextureSize)) {
                 delete[] currentRows;
                 break;
             }
@@ -174,10 +190,10 @@ bool spg::Font::generate(       FontSize size,
             SDL_Surface* glyphSurface = nullptr;
             switch(renderStyle) {
                 case FontRenderStyle::SOLID:
-                    glyphSurface = TTF_RenderGlyph_Solid(font, static_cast<ui16>(m_begin + charIndex), { 255, 255, 255, 255 });
+                    glyphSurface = TTF_RenderGlyph_Solid(font, static_cast<ui16>(m_start + charIndex), { 255, 255, 255, 255 });
                     break;
-                case FontRenderStyle::SHADED:
-                    glyphSurface = TTF_RenderGlyph_Shaded(font, static_cast<ui16>(m_begin + charIndex), { 255, 255, 255, 255 });
+                case FontRenderStyle::BLENDED:
+                    glyphSurface = TTF_RenderGlyph_Blended(font, static_cast<ui16>(m_start + charIndex), { 255, 255, 255, 255 });
                     break;
             }
 
@@ -195,10 +211,10 @@ bool spg::Font::generate(       FontSize size,
             glyphSurface = nullptr;
 
             // Update currentU.
-            currentU += glyphRects[charIndex].z + padding;
+            currentU += glyphSurface->w + padding;
         }
         // Update currentV.
-        currentV += bestRows[rowIndex].first; + padding;
+        currentV += bestRows[rowIndex].first + padding;
     }
 
     // Clean up.
@@ -209,12 +225,18 @@ bool spg::Font::generate(       FontSize size,
 
     // Insert our font instance.
     m_fontInstances.emplace(std::make_pair(hash(size, style, renderStyle), fontInstance));
+
+    return true;
 }
 
-spg::FontInstance& getFontInstance(       FontSize size,
-                                         FontStyle style       /*= FontStyle::NORMAL*/,
-                                   FontRenderStyle renderStyle /*= FontRenderStyle::SHADED*/) {
-    return m_fontInstances.at(hash(size, style, renderStyle));
+spg::FontInstance spg::Font::getFontInstance(       FontSize size,
+                                                   FontStyle style       /*= FontStyle::NORMAL*/,
+                                             FontRenderStyle renderStyle /*= FontRenderStyle::BLENDED*/) {
+    try {
+        return m_fontInstances.at(hash(size, style, renderStyle));
+    } catch (std::out_of_range e) {
+        return NIL_FONT_INSTANCE;
+    }
 }
 
 spg::Font::Row* spg::Font::generateRows(Glyph* glyphs, ui32 rowCount, FontSize padding, ui32& width, ui32& height) {
@@ -233,7 +255,7 @@ spg::Font::Row* spg::Font::generateRows(Glyph* glyphs, ui32 rowCount, FontSize p
 
     // For each character, we now determine which row to put it in, updating the width and
     // height variables as we go.
-    for (ui32 i = 0; i < static_cast<ui32>(m_end - m_begin); ++i) {
+    for (ui32 i = 0; i < static_cast<ui32>(m_end - m_start); ++i) {
         // Determine which row currently has the least width: this is the row we will add
         // the currently considered glyph to.
         size_t bestRow = 0;
@@ -263,10 +285,53 @@ spg::Font::Row* spg::Font::generateRows(Glyph* glyphs, ui32 rowCount, FontSize p
 
     // Clear up memory.
     delete[] currentWidths;
-    delete[] maxHeights;
 
     // Return the rows we've built up!
     return rows;
+}
+
+void spg::FontCache::dispose() {
+    // Dispose the cached fonts.
+    for (auto& font : m_fonts) {
+        font.second.dispose();
+    }
+
+    // Empty our map of fonts.
+    Fonts().swap(m_fonts);
+}
+
+bool spg::FontCache::registerFont(const char* name, const char* filepath, char start, char end) {
+    // Try to emplace a new Font object with the given name.
+    auto [it, added] = m_fonts.try_emplace(name, Font());
+    // If we added it, then initialise the Font object.
+    if (added) {
+        m_fonts.at(name).init(filepath, start, end);
+        return true;
+    }
+    return false;
+}
+
+bool spg::FontCache::registerFont(const char* name, const char* filepath) {
+    // Try to emplace a new Font object with the given name.
+    auto [it, added] = m_fonts.try_emplace(name, Font());
+    // If we added it, then initialise the Font object.
+    if (added) {
+        m_fonts.at(name).init(filepath);
+        return true;
+    }
+    return false;
+}
+
+spg::FontInstance spg::FontCache::fetchFontInstance(const char* name, FontSize size, FontStyle style = FontStyle::NORMAL, FontRenderStyle renderStyle = FontRenderStyle::BLENDED) {
+    // Make sure a font exists with the given name.
+    auto font = m_fonts.find(name);
+    if (font == m_fonts.end()) return NIL_FONT_INSTANCE;
+
+    // Generate the specified font instance if it doesn't exist.
+    font->generate(size, style, renderStyle);
+
+    // Return the font instance.
+    return font->getFontInstance(size, style, renderStyle);
 }
 
 // These are just a set of functions to let us use bit-masking for FontStyle.

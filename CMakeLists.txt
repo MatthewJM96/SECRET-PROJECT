@@ -107,38 +107,48 @@ include_directories("${CMAKE_SOURCE_DIR}/include")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/include")
 
 # Define the headers and sources created for the project.
-set(SP_headers
+set(SP_include
+    include/stdafx.h
+    include/types.h
 )
 
-set(SP_sources
+set(SP_src
     src/main.cpp
 )
 
-set(SP_graphics
+set(SP_graphics_include
+    include/graphics/Font.h
     include/graphics/GLSLProgram.h
     include/graphics/Gradients.hpp
     include/graphics/SpriteBatcher.h
-# Source
+)
+
+set(SP_graphics_src
+    src/graphics/Font.cpp
     src/graphics/GLSLProgram.cpp
     src/graphics/SpriteBatcher.cpp
 )
 
-set(SP_io
+set(SP_io_include
     include/io/FileLoader.h
-# Source
+)
+set(SP_io_src
     src/io/FileLoader.cpp
 )
 
 # As we make them, create groupings by namespace - e.g. graphics, IO, UI to improve Visual Studio project file creation.
-source_group("graphics" FILES ${SP_graphics})
-source_group("io" FILES ${SP_io})
+source_group("include" FILES ${SP_include})
+source_group("src" FILES ${SP_src})
+source_group("include/graphics" FILES ${SP_graphics_include})
+source_group("src/graphics" FILES ${SP_graphics_src})
+source_group("include/io" FILES ${SP_io_include})
+source_group("src/io" FILES ${SP_io_src})
 
 # Add an executable to be compiled and linked.
 add_executable(SECRET_PROJECT
-    ${SP_headers}
-    ${SP_sources}
-    ${SP_graphics}
-    ${SP_io}
+    ${SP_src}
+    ${SP_graphics_src}
+    ${SP_io_src}
 )
 
 # Target the libraries we want to link.
