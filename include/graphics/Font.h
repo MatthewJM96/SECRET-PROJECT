@@ -74,6 +74,16 @@ namespace SecretProject {
         const FontInstance NIL_FONT_INSTANCE = { 0, 0, nullptr };
 
         /**
+         * @brief Properties needed to draw a string.
+         */
+        struct StringDrawProperties {
+            FontInstance fontInstance;
+            f32v2        scaling;
+            colour4      tint;
+        };
+        using StringComponents = std::vector<std::pair<const char*, StringDrawProperties>>;
+
+        /**
          * @brief Handles a single font (defined by a single TTF file), for which textures
          *        may be generated for variations of font size and style.
          */
