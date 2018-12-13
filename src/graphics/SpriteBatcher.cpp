@@ -278,7 +278,7 @@ bool spg::SpriteBatcher::setShader(GLSLProgram* shader /*= nullptr*/) {
     if (shader == nullptr) {
         m_activeShader = &m_defaultShader;
     } else {
-        if (!shader->isInitialised()) return;
+        if (!shader->isInitialised()) return false;
 
         if (!shader->isLinked()) {
             shader->setAttribute("vPosition",         SpriteShaderAttribID::POSITION);
@@ -300,15 +300,15 @@ void spg::SpriteBatcher::render(const f32m4& worldProjection, const f32m4& viewP
         m_activeShader->use();
 
         // Upload our projection matrices.
-        glUniformMatrix4fv(shader->getUniformLocation("WorldProjection"), 1, false, &worldProjection[0][0]);
-        glUniformMatrix4fv(shader->getUniformLocation("ViewProjection"),  1, false, &viewProjection[0][0]);
+        glUniformMatrix4fv(m_activeShader->getUniformLocation("WorldProjection"), 1, false, &worldProjection[0][0]);
+        glUniformMatrix4fv(m_activeShader->getUniformLocation("ViewProjection"),  1, false, &viewProjection[0][0]);
 
         // Bind our vertex array.
         glBindVertexArray(m_vao);
 
         // Activate the zeroth texture slot in OpenGL, and pass the index to the texture uniform in our shader.
         glActiveTexture(GL_TEXTURE0);
-        glUniform1i(shader->getUniformLocation("SpriteTexture"), 0);
+        glUniform1i(m_activeShader->getUniformLocation("SpriteTexture"), 0);
 
         // For each batch, bind its texture, set the sampler state (have to do this each time), and draw the triangles in that batch.
         for (auto& batch : m_batches) {
