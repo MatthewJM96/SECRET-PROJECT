@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "graphics/SpriteBatcher.h"
 
+#include "graphics/Clipping.hpp"
 #include "graphics/Font.h"
 
 #define VERTICES_PER_QUAD 4
@@ -242,18 +243,93 @@ void spg::SpriteBatcher::drawString( const char* str,
     drawString(components, rect, align, wrap, depth);
 }
 
+// Need this for centered alignments.
+// struct DrawableGlyph {
+//     Glyph glyph;
+//     f32   xPos;
+//     f32v2 scaling;
+// };
+
 void spg::SpriteBatcher::drawString(StringComponents components,
                                                f32v4 rect,
                                            TextAlign align /*= TextAlign::TOP_LEFT*/,
                                             WordWrap wrap  /*= WordWrap::NONE*/,
                                                  f32 depth /*= 0.0f*/) {
-    // This is a trick to make the compiler think we use these parameters - good to temporarily hide warnings.
-    (void) components;
-    (void) rect;
-    (void) align;
-    (void) wrap;
-    (void) depth;
     // TODO(Matthew): Implement actual string draw. (OH GOD PLEASE HELP ME)
+
+    // Need this for centered alignments.
+    // std::vector<std::vector<DrawableGlyph>> lines;
+    // lines.emplace_back();
+    // TODO(Matthew): For now just implementing no word wrap with top-left alignment.
+    //                 -> Complete for other wrap modes and alignments.
+    // f32 currentX = 0.0f;
+    f32v2 currentPos = f32v2(0.0f);
+    for (auto& component : components) {
+        // Simplify property names.
+        const char*  str    = component.first;
+        FontInstance font   = component.second.fontInstance;
+        StringSizing sizing = component.second.sizing;
+        colour4      tint   = component.second.tint;
+
+        char start = font.owner->getStart();
+        char end   = font.owner->getEnd();
+
+        // Process sizing into a simple scale factor.
+        f32v2 scaling;
+        if (sizing.kind == StringSizingKind::SCALED) {
+            scaling = sizing.scaling;
+        } else {
+            scaling.x = sizing.scaleX;
+            scaling.y = sizing.targetHeight / static_cast<f32>(font.height);
+        }
+
+        f32 lineHeight = sizing.targetHeight;
+
+        // Iterate over this component's string.
+        for (size_t i = 0; str[i] != '\0'; ++i) {
+            char   character      = str[i];
+            size_t characterIndex = static_cast<size_t>(character) - static_cast<size_t>(start);
+
+            // If character is a new line character, add a new line and go to next character.
+            if (character == '\n') {
+                // Do this for centered alignments instead of incrementing currentPos.y.
+                // lines.emplace_back();
+                currentPos.x  = 0.0f;
+                currentPos.y += lineHeight;
+                continue;
+            }
+
+            // TODO(Matthew): Handle unsupported characters better?
+            // If character is unsupported, skip.
+            if (c < start || c > end) continue;
+
+            // Skip non-newline characters once out of bounds of our rectangle.
+            if (currentPos.x > rect.z) continue;
+
+            // Note, we are now going to directly draw the glyph into the sprite batcher here as we are assuming an
+            // anchored start position for text (TOP_LEFT alignment). Any anchored alignment can do this. However
+            // centered alignments cannot as they need to know the size of the rectangle the text forms to determine
+            // start position.
+            {
+                f32v2 size         = font.glyphs[characterIndex].size * scaling;
+                f32v2 position     = currentPos + f32v2(0.0f, lineHeight - size.y);
+                f32v4 uvDimensions = font.glyphs[characterIndex].uvDimensions;
+
+                clip(rect, position, size, uvDimensions);
+
+                if (size.x > 0.0f && size.y > 0.0f) {
+                    draw(font.texture, position, size, { 255, 255, 255, 255 },
+                            { 255, 255, 255, 255 }, Gradient::NONE, depth, uvDimensions);
+                }
+            }
+
+            // For centered alignments, we would have to emplace back a drawable glyph and then draw later.
+            // lines.back().emplace_back(DrawableGlyph{ font.glyphs[characterIndex], currentPos.x, scaling });
+
+            f32 characterWidth = font.glyphs[characterIndex].size.x * scaling.x;
+            currentPos.x += characterWidth;
+        }
+    }
 }
 
 void spg::SpriteBatcher::end(SpriteSortMode sortMode /*= SpriteSortMode::TEXTURE*/) {
