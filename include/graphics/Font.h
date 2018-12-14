@@ -55,6 +55,9 @@ namespace SecretProject {
             f32v2 size;
         };
 
+        // Forward declare Font.
+        class Font;
+
         /**
          * @brief Data for an instance of a font with specific render style, and font style and size.
          *
@@ -72,7 +75,7 @@ namespace SecretProject {
             Glyph* glyphs;
             Font*  owner;
         };
-        const FontInstance NIL_FONT_INSTANCE = { 0, 0, nullptr };
+        const FontInstance NIL_FONT_INSTANCE = { 0, 0, nullptr, nullptr };
 
         /**
          * @brief Whether the string should be sized (vertically) by a scale factor or target a fixed pixel height.

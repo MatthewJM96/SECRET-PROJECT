@@ -257,6 +257,9 @@ void spg::SpriteBatcher::drawString(StringComponents components,
                                                  f32 depth /*= 0.0f*/) {
     // TODO(Matthew): Implement actual string draw. (OH GOD PLEASE HELP ME)
 
+    (void) align;
+    (void) wrap;
+
     // Need this for centered alignments.
     // std::vector<std::vector<DrawableGlyph>> lines;
     // lines.emplace_back();
@@ -301,7 +304,7 @@ void spg::SpriteBatcher::drawString(StringComponents components,
 
             // TODO(Matthew): Handle unsupported characters better?
             // If character is unsupported, skip.
-            if (c < start || c > end) continue;
+            if (character < start || character > end) continue;
 
             // Skip non-newline characters once out of bounds of our rectangle.
             if (currentPos.x > rect.z) continue;
@@ -318,7 +321,7 @@ void spg::SpriteBatcher::drawString(StringComponents components,
                 clip(rect, position, size, uvDimensions);
 
                 if (size.x > 0.0f && size.y > 0.0f) {
-                    draw(font.texture, position, size, { 255, 255, 255, 255 },
+                    draw(font.texture, position, size, tint,
                             { 255, 255, 255, 255 }, Gradient::NONE, depth, uvDimensions);
                 }
             }

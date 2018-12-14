@@ -117,6 +117,7 @@ set(SP_src
 )
 
 set(SP_graphics_include
+    include/graphics/Clipping.hpp
     include/graphics/Font.h
     include/graphics/GLSLProgram.h
     include/graphics/Gradients.hpp
