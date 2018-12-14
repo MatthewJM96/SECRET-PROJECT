@@ -70,6 +70,7 @@ namespace SecretProject {
             GLuint texture;
             ui32   height;
             Glyph* glyphs;
+            Font*  owner;
         };
         const FontInstance NIL_FONT_INSTANCE = { 0, 0, nullptr };
 
@@ -140,6 +141,9 @@ namespace SecretProject {
              * @brief Disposes of the font and all variations for which textures were generated.
              */
             void dispose();
+
+            char getStart() { return m_start; }
+            char getEnd()   { return m_end;   }
 
             FontSize getDefaultSize()              { return m_defaultSize; }
             void     setDefaultSize(FontSize size) { m_defaultSize = size; }
