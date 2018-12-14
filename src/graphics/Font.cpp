@@ -73,6 +73,8 @@ bool spg::Font::generate(       FontSize size,
     FontInstance fontInstance{};
     // Create the glyphs array for this font instance.
     fontInstance.glyphs = new Glyph[m_end - m_start];
+    // Set this as the font instance's owner.
+    fontInstance.owner = this;
 
     // Open the font and check we didn't fail.
     TTF_Font* font = TTF_OpenFont(m_filepath, size);
