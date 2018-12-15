@@ -10,7 +10,10 @@
 spg::SpriteBatcher::SpriteBatcher() :
     m_vao(0), m_vbo(0), m_ibo(0),
     m_usageHint(GL_STATIC_DRAW),
-    m_indexCount(0)
+    m_indexCount(0),
+    m_defaultTexture(0),
+    m_activeShader(nullptr),
+    m_fontCache(nullptr)
 {
     /* Empty */
 }
