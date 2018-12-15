@@ -343,9 +343,7 @@ void spg::SpriteBatcher::drawString(StringComponents components,
 
 void spg::SpriteBatcher::end(SpriteSortMode sortMode /*= SpriteSortMode::TEXTURE*/) {
     // Reserve the right amount of space to then assign a pointer for each sprite.
-    if (m_spritePtrs.capacity() < m_sprites.size()) {
-        m_spritePtrs.reserve(m_sprites.size());
-    } else {
+    if (m_spritePtrs.size() != m_sprites.size()) {
         m_spritePtrs.resize(m_sprites.size());
     }
     for (size_t i = 0; i < m_sprites.size(); ++i) {
@@ -466,9 +464,8 @@ void spg::SpriteBatcher::generateBatches() {
     // Create our first batch, which has 0 offset and texture the same as that of
     // the first sprite - as it defines the first batch.
     m_batches.emplace_back();
-    auto& batch       = m_batches.back();
-    batch.indexOffset = 0;
-    batch.texture     = m_sprites[0].texture;
+    m_batches.back().indexOffset = 0;
+    m_batches.back().texture     = m_spritePtrs[0]->texture;
 
     // For each sprite, we want to populate the vertex buffer with those for that
     // sprite. In the case that we are changing to a new texture, we need to 
@@ -476,15 +473,14 @@ void spg::SpriteBatcher::generateBatches() {
     for (auto& sprite : m_spritePtrs) {
         // Start a new batch with texture of the sprite we're currently working with
         // if that texture is different to the previous batch.
-        if (sprite->texture != batch.texture) {
+        if (sprite->texture != m_batches.back().texture) {
             // Now we are making a new batch, we can set the number of indices in 
             // the previous batch.
-            batch.indexCount = indexCount - batch.indexOffset;
+            m_batches.back().indexCount = indexCount - m_batches.back().indexOffset;
             m_batches.emplace_back();
 
-            batch = m_batches.back();
-            batch.indexOffset = indexCount;
-            batch.texture     = sprite->texture;
+            m_batches.back().indexOffset = indexCount;
+            m_batches.back().texture     = sprite->texture;
         }
 
         // Builds the sprite's quad, i.e. adds the sprite's vertices to the vertex buffer.
@@ -494,7 +490,7 @@ void spg::SpriteBatcher::generateBatches() {
         vertCount  += VERTICES_PER_QUAD;
         indexCount += INDICES_PER_QUAD;
     }
-    batch.indexCount = indexCount - batch.indexOffset;
+    m_batches.back().indexCount = indexCount - m_batches.back().indexOffset;
 
     // If we need more indices than we have so far uploaded to the GPU, we must
     // generate more and update the index buffer on the GPU.
