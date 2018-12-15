@@ -256,6 +256,12 @@ namespace SecretProject {
             FontInstanceMap m_fontInstances;
         };
 
+        // TODO(Matthew): Implement font instance disposal.
+        //                    We wanna release memory we are using as soon as we don't need it!
+        // TODO(Matthew): Implement packing of font textures?
+        //                    At one level this can be done inside Font by generating multiple font instances simultaneously in a pack,
+        //                    at a second, we could let the cacher request all the font instances it has cached be packed together?
+        //                        Packing the fonts will reduce the number of drawcalls needed in text using multiple font instances (e.g. bold and non-bold text).
         /**
          * @brief Provides a cache for fonts, each identified by a name.
          */
