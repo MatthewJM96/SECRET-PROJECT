@@ -351,7 +351,7 @@ void spg::FontCache::dispose() {
 
 bool spg::FontCache::registerFont(const char* name, const char* filepath, char start, char end) {
     // Try to emplace a new Font object with the given name.
-    auto [it, added] = m_fonts.try_emplace(name, Font());
+    auto [_, added] = m_fonts.try_emplace(name, Font());
     // If we added it, then initialise the Font object.
     if (added) {
         m_fonts.at(name).init(filepath, start, end);
@@ -362,7 +362,7 @@ bool spg::FontCache::registerFont(const char* name, const char* filepath, char s
 
 bool spg::FontCache::registerFont(const char* name, const char* filepath) {
     // Try to emplace a new Font object with the given name.
-    auto [it, added] = m_fonts.try_emplace(name, Font());
+    auto [_, added] = m_fonts.try_emplace(name, Font());
     // If we added it, then initialise the Font object.
     if (added) {
         m_fonts.at(name).init(filepath);
