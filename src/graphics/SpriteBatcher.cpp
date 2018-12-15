@@ -42,6 +42,9 @@ void spg::SpriteBatcher::init(FontCache* fontCache, GLenum usageHint /*= GL_STAT
     // Link program (i.e. send to GPU).
     m_defaultShader.link();
 
+    // Set default shader as active shader.
+    m_activeShader = &m_defaultShader;
+
     /******************\
      * Create the VAO *
     \******************/
@@ -279,15 +282,16 @@ void spg::SpriteBatcher::drawString(StringComponents components,
 
         // Process sizing into a simple scale factor.
         f32v2 scaling;
+        f32   lineHeight;
         if (sizing.kind == StringSizingKind::SCALED) {
-            scaling = sizing.scaling;
+            scaling    = sizing.scaling;
+            lineHeight = static_cast<f32>(font.height) * scaling.y;
         } else {
-            scaling.x = sizing.scaleX;
-            scaling.y = sizing.targetHeight / static_cast<f32>(font.height);
+            scaling.x  = sizing.scaleX;
+            scaling.y  = sizing.targetHeight / static_cast<f32>(font.height);
+            lineHeight = sizing.targetHeight;
         }
-
-        f32 lineHeight = sizing.targetHeight;
-
+ 
         // Iterate over this component's string.
         for (size_t i = 0; str[i] != '\0'; ++i) {
             char   character      = str[i];
@@ -323,6 +327,8 @@ void spg::SpriteBatcher::drawString(StringComponents components,
                 if (size.x > 0.0f && size.y > 0.0f) {
                     draw(font.texture, position, size, tint,
                             { 255, 255, 255, 255 }, Gradient::NONE, depth, uvDimensions);
+                } else {
+                    continue;
                 }
             }
 
