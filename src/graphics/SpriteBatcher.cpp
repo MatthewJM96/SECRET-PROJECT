@@ -249,12 +249,86 @@ void spg::SpriteBatcher::drawString( const char* str,
     drawString(components, rect, align, wrap, depth);
 }
 
+/**
+ * @brief Calculates the offsets needed for a specific line of text.
+ *
+ * @param align The alignment of the text.
+ * @param rect The rectangle in which the text will be drawn.
+ * @param height The height of the entire body of text to be drawn.
+ * @param length The length of the line for which the offset is being calculated.
+ *
+ * @return The offset calculated.
+ */
+f32v2 calculateOffset(TextAlign align, const f32v4& rect, f32 height, f32 length) {
+    switch (align) {
+        case TextAlign::NONE:
+        case TextAlign::TOP_LEFT:
+            return f32v2(
+                0.0f,
+                0.0f
+            );
+        case TextAlign::CENTER_LEFT:
+            return f32v2(
+                0.0f,
+                (rect.w - height) / 2.0f
+            );
+        case TextAlign::BOTTOM_LEFT:
+            return f32v2(
+                0.0f,
+                rect.w - height
+            );
+        case TextAlign::TOP_CENTER:
+            return f32v2(
+                (rect.z - length) / 2.0f,
+                0.0f
+            );
+        case TextAlign::CENTER_CENTER:
+            return f32v2(
+                (rect.z - length) / 2.0f,
+                (rect.w - height) / 2.0f
+            );
+        case TextAlign::BOTTOM_CENTER:
+            return f32v2(
+                (rect.z - length) / 2.0f,
+                rect.w - height
+            );
+            break;
+        case TextAlign::TOP_RIGHT:
+            return f32v2(
+                rect.z - length,
+                0.0f
+            );
+        case TextAlign::CENTER_RIGHT:
+            return f32v2(
+                rect.z - length,
+                (rect.w - height) / 2.0f
+            );
+        case TextAlign::BOTTOM_RIGHT:
+            return f32v2(
+                rect.z - length,
+                rect.w - height
+            );
+        default:
+            // Should never get here.
+            assert(false);
+    }
+}
+
 // Need this for centered alignments.
-// struct DrawableGlyph {
-//     Glyph glyph;
-//     f32   xPos;
-//     f32v2 scaling;
-// };
+struct DrawableGlyph {
+    spg::Glyph* glyph;
+    f32         xPos;
+    f32v2       scaling;
+    colour4     tint;
+    GLuint      texture;
+};
+
+struct DrawableLine {
+    f32 length;
+    f32 height;
+    std::vector<DrawableGlyph> drawables;
+};
+using DrawableLines = std::vector<DrawableLine>;
 
 void spg::SpriteBatcher::drawString(StringComponents components,
                                                f32v4 rect,
@@ -262,17 +336,17 @@ void spg::SpriteBatcher::drawString(StringComponents components,
                                             WordWrap wrap  /*= WordWrap::NONE*/,
                                                  f32 depth /*= 0.0f*/) {
     // TODO(Matthew): Implement actual string draw. (OH GOD PLEASE HELP ME)
-
-    (void) align;
     (void) wrap;
 
-    // Need this for centered alignments.
-    // std::vector<std::vector<DrawableGlyph>> lines;
-    // lines.emplace_back();
-    // TODO(Matthew): For now just implementing no word wrap with top-left alignment.
-    //                 -> Complete for other wrap modes and alignments.
-    // f32 currentX = 0.0f;
-    f32v2 currentPos = f32v2(0.0f);
+    // We will populate these data points for drawing later.
+    DrawableLines lines;
+    f32 totalHeight = 0.0f;
+
+    // Place the first line.
+    lines.emplace_back(DrawableLine{0.0f, 0.0f, std::vector<DrawableGlyph>()});
+
+    // TODO(Matthew): Can we make guesses as to the amount of drawables to reserve for a line? For amount of lines?
+
     for (auto& component : components) {
         // Simplify property names.
         const char*  str    = component.first;
@@ -285,16 +359,18 @@ void spg::SpriteBatcher::drawString(StringComponents components,
 
         // Process sizing into a simple scale factor.
         f32v2 scaling;
-        f32   lineHeight;
+        f32   height;
         if (sizing.kind == StringSizingKind::SCALED) {
             scaling    = sizing.scaling;
-            lineHeight = static_cast<f32>(font.height) * scaling.y;
+            height = static_cast<f32>(font.height) * scaling.y;
         } else {
             scaling.x  = sizing.scaleX;
             scaling.y  = sizing.targetHeight / static_cast<f32>(font.height);
-            lineHeight = sizing.targetHeight;
+            height = sizing.targetHeight;
         }
  
+        // Gets set to true if we go out of the height of the rect.
+        bool verticalOverflow = false;
         // Iterate over this component's string.
         for (size_t i = 0; str[i] != '\0'; ++i) {
             char   character      = str[i];
@@ -302,44 +378,61 @@ void spg::SpriteBatcher::drawString(StringComponents components,
 
             // If character is a new line character, add a new line and go to next character.
             if (character == '\n') {
-                // Do this for centered alignments instead of incrementing currentPos.y.
-                // lines.emplace_back();
-                currentPos.x  = 0.0f;
-                currentPos.y += lineHeight;
-                continue;
-            }
-            // If character is unsupported, skip.
-            if (character < start || character > end ||
-                    !font.glyphs[characterIndex].supported) continue;
+                totalHeight += lines.back().height;
+                lines.emplace_back(DrawableLine{ 0.0f, height, std::vector<DrawableGlyph>() });
 
-            // Skip non-newline characters once out of bounds of our rectangle.
-            if (currentPos.x > rect.z) continue;
-
-            // Note, we are now going to directly draw the glyph into the sprite batcher here as we are assuming an
-            // anchored start position for text (TOP_LEFT alignment). Any anchored alignment can do this. However
-            // centered alignments cannot as they need to know the size of the rectangle the text forms to determine
-            // start position.
-            {
-                f32v2 size         = font.glyphs[characterIndex].size * scaling;
-                f32v2 position     = currentPos + f32v2(0.0f, lineHeight - size.y);
-                f32v4 uvDimensions = font.glyphs[characterIndex].uvDimensions;
-
-                clip(rect, position, size, uvDimensions);
-
-                if (size.x > 0.0f && size.y > 0.0f) {
-                    draw(font.texture, position, size, tint,
-                            { 255, 255, 255, 255 }, Gradient::NONE, depth, uvDimensions);
+                // If we have overflowed the rectangle, break out, otherwise populate
+                // a new line.
+                if (totalHeight > rect.w) {
+                    verticalOverflow = true;
+                    break;
                 } else {
                     continue;
                 }
             }
 
-            // For centered alignments, we would have to emplace back a drawable glyph and then draw later.
-            // lines.back().emplace_back(DrawableGlyph{ font.glyphs[characterIndex], currentPos.x, scaling });
+            // If character is unsupported, skip.
+            if (character < start || character > end ||
+                    !font.glyphs[characterIndex].supported) continue;
 
+            // Skip non-newline characters once out of bounds of our rectangle.
+            if (lines.back().length > rect.z) continue;
+
+            // If the line's height is less than the height of this font instance, and we're about to add a
+            // glyph from this font instance, then the line's height needs setting to the font instances's.
+            if (lines.back().height < height) lines.back().height = height;
+
+            // Determine character width after scaling.
             f32 characterWidth = font.glyphs[characterIndex].size.x * scaling.x;
-            currentPos.x += characterWidth;
+
+            // For centered alignments, we would have to emplace back a drawable glyph and then draw later.
+            lines.back().drawables.emplace_back(DrawableGlyph{ &font.glyphs[characterIndex], lines.back().length, scaling, tint, font.texture });
+            lines.back().length += characterWidth;
         }
+    }
+    // Update the total height for last line.
+    totalHeight += lines.back().height;
+
+    f32 currentY = 0.0f;
+    for (auto& line : lines) {
+        f32v2 offsets = calculateOffset(align, rect, totalHeight, line.length);
+
+        for (auto& drawable : line.drawables) {
+            f32v2 size         = drawable.glyph->size * drawable.scaling;
+            f32v2 position     = f32v2(drawable.xPos, currentY) + offsets + f32v2(rect.x, rect.y) + f32v2(0.0f, line.height - drawable.glyph->size.y);
+            f32v4 uvDimensions = drawable.glyph->uvDimensions;
+
+            clip(rect, position, size, uvDimensions);
+
+            if (size.x > 0.0f && size.y > 0.0f) {
+                draw(drawable.texture, position, size, drawable.tint,
+                        { 255, 255, 255, 255 }, Gradient::NONE, depth, uvDimensions);
+            } else {
+                continue;
+            }
+        }
+
+        currentY += line.height;
     }
 }
 
