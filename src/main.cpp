@@ -20,6 +20,11 @@ int main(int, char*[]) {
     // Prepares SDL library, which handles windows and user input.
     SDL_Init(SDL_INIT_EVERYTHING);
 
+    // Initialise library for loading, manipulating, and drawing fonts.
+    if (TTF_Init() < 0) {
+        return -3;
+    }
+
     // A couple of handles we need for rendering and modifying our window.
     SDL_Window* window;
     SDL_GLContext context;
@@ -34,11 +39,6 @@ int main(int, char*[]) {
     context = SDL_GL_CreateContext(window);
     if (context == nullptr) {
         return -2;
-    }
-
-    // Initialise library for loading, manipulating, and drawing fonts.
-    if (TTF_Init() < 0) {
-        return -3;
     }
 
     // Initialise wrapper of OpenGL - this provides all the functions we call in the OpenGL library.
@@ -66,13 +66,21 @@ int main(int, char*[]) {
     //   most modern LCDs) or a lower multiple thereof (e.g. 30 frames per second, or even 15 in the case of a 60Hz monitor).
     SDL_GL_SetSwapInterval(1);
 
+    // Create a font cache and load a test font.
+    spg::FontCache fontCache;
+    fontCache.registerFont("Orbitron", "fonts/orbitron_bold-webfont.ttf");
+
+    // Save our font REAL BIG.
+    fontCache.fetchFontInstance("Orbitron", 80).saveAsPng("debug/orbitron.png");
+
     // Create a test sprite batcher, initialise it and reserve space for 10 sprites.
     spg::SpriteBatcher sb;
-    sb.init(nullptr); // TODO(Matthew): Actually give it a font cache!
+    sb.init(&fontCache);
     sb.reserve(10);
 
     // Begin the drawing mode of the sprite batcher, draw 10 sprites, then end the draw mode - at which point the sprites are sorted and turned into batches for rendering.
     sb.begin();
+    sb.drawString("Hello, World!", f32v4(0.0f, 0.0f, 1200.0f, 800.0f), { spg::StringSizingKind::SCALED, { f32v2(1.0f, 1.0f) } }, { 189, 34, 203, 255 }, "Orbitron", 40);
     for (size_t i = 0; i < 10; ++i) {
         sb.draw(0, f32v2(40.0f * static_cast<f32>(i), 40.0f * static_cast<f32>(i)), f32v2(40.0f, 40.0f), { static_cast<ui8>(20 * i), 50, 128, 255 });
     }
