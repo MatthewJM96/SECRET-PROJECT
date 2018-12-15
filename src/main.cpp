@@ -22,7 +22,7 @@ int main(int, char*[]) {
 
     // Initialise library for loading, manipulating, and drawing fonts.
     if (TTF_Init() < 0) {
-        return -3;
+        return -1;
     }
 
     // A couple of handles we need for rendering and modifying our window.
@@ -32,13 +32,13 @@ int main(int, char*[]) {
     // Create the window - notifying SDL that we are using OpenGL and want the window to be resizable in addition to the window name, where to put the window on our screel initiailly and the resolution of the window.
     window = SDL_CreateWindow("SECRET_PROJECT", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1200, 800, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (window == nullptr) {
-        return -1;
+        return -2;
     }
 
     // Create an OpenGL context associated with the window - we use this whenever we're done rendering and want SDL to put what we've rendered on our screen.
     context = SDL_GL_CreateContext(window);
     if (context == nullptr) {
-        return -2;
+        return -3;
     }
 
     // Initialise wrapper of OpenGL - this provides all the functions we call in the OpenGL library.
