@@ -165,7 +165,7 @@ bool spg::Font::generate(       FontSize size,
     // Make sure we actually have rows to use.
     if (bestRows == nullptr) return false;
 
-    // TODO(Matthew): Don't wanna be calling glGet every font gen... determine and store somewhere are initialisation.
+    // TODO(Matthew): Don't wanna be calling glGet every font gen... determine and store somewhere at initialisation.
     // Get maximum texture size allowed by implementation.
     GLint maxTextureSize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
@@ -231,6 +231,7 @@ bool spg::Font::generate(       FontSize size,
     glBindTexture(GL_TEXTURE_2D, 0);
     delete[] bestRows;
 
+    // TODO(Matthew): We really want to be able to close the font... but it just won't bloody close.
     // TTF_CloseFont(font);
 
     // Insert our font instance.
