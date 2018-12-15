@@ -28,6 +28,8 @@ hunter_add_package(SDL2)
 find_package(SDL2 CONFIG REQUIRED)
 hunter_add_package(SDL_ttf)
 find_package(SDL_ttf CONFIG REQUIRED)
+hunter_add_package(PNG)
+find_package(PNG CONFIG REQUIRED)
 
 # Set up compiler environment
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -134,9 +136,11 @@ set(SP_graphics_src
 
 set(SP_io_include
     include/io/FileLoader.h
+    include/io/ImageIO.h
 )
 set(SP_io_src
     src/io/FileLoader.cpp
+    src/io/ImageIO.cpp
 )
 
 # As we make them, create groupings by namespace - e.g. graphics, IO, UI to improve Visual Studio project file creation.
@@ -162,6 +166,7 @@ target_link_libraries(
     SDL_ttf::SDL_ttf
     glew::glew
     glm
+    PNG::png
 )
 
 # Create launchers for the target.
