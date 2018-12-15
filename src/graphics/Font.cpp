@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "graphics/Font.h"
 
+#include "io/ImageIO.h"
+
 /**
  * @brief Determines the next power of 2 after the given value and returns it.
  *
@@ -35,6 +37,21 @@ spg::FontInstanceHash spg::hash(FontSize size, FontStyle style, FontRenderStyle 
     hash += static_cast<FontInstanceHash>(renderStyle) << ((sizeof(FontSize) + sizeof(FontStyle)) * 8);
 
     return hash;
+}
+
+bool spg::FontInstance::saveAsPng(const char* filepath) {
+    // Prepare the pixel buffer.
+    ui8* pixels = new ui8[textureSize.x * textureSize.y * 4];
+
+    // Bind the texture, load it into our buffer, and then unbind it.
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Save the pixels as obtained to the given filepath.
+    return spio::Image::save(filepath, static_cast<void*>(pixels), textureSize, spio::Image::PixelFormat::RGBA_UI8);
 }
 
 spg::Font::Font() :
@@ -99,8 +116,8 @@ bool spg::Font::generate(       FontSize size,
             TTF_GlyphMetrics(font, c, &metrics.x, &metrics.y,
                                     &metrics.z, &metrics.w, nullptr);
 
-            fontInstance.glyphs[i].size.x = metrics.z - metrics.x;
-            fontInstance.glyphs[i].size.y = metrics.w - metrics.y;
+            fontInstance.glyphs[i].size.x = metrics.y - metrics.x;
+            fontInstance.glyphs[i].size.y = metrics.w - metrics.z;
 
             ++i;
         }
@@ -127,22 +144,6 @@ bool spg::Font::generate(       FontSize size,
         currentWidth  = nextPower2(currentWidth);
         currentHeight = nextPower2(currentHeight);
 
-        // TODO(Matthew): Pretty sure that this isn't actually getting the maximum
-        //                size of one dimension, rather the maximum area allowed
-        //                after squaring this value. If so, we should revisit this
-        //                loop!
-        // Get maximum texture size allowed by implementation.
-        GLint maxTextureSize;
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
-
-        // If current width exceeds the maximum OpenGL texture size (and current height does not),
-        // then try adding another row.
-        if (currentWidth > static_cast<ui32>(maxTextureSize) && currentHeight < static_cast<ui32>(maxTextureSize)) {
-            ++rowCount;
-            delete[] currentRows;
-            continue;
-        }
-
         // If the area of the rectangle drawn out by the rows generated is less than the previous
         // best area, then we have a new candidate!
         if (currentWidth * currentHeight < bestArea) {
@@ -153,13 +154,6 @@ bool spg::Font::generate(       FontSize size,
             bestRowCount = rowCount;
             bestArea     = bestWidth * bestHeight;
             ++rowCount;
-
-            // If current height exceeds the maximum OpenGL texture size then there's no point
-            // considering adding another row.
-            if (currentHeight > static_cast<ui32>(maxTextureSize)) {
-                delete[] currentRows;
-                break;
-            }
         } else {
             // Area has increased, break out as going forwards it's likely area will only continue
             // to increase.
@@ -170,6 +164,20 @@ bool spg::Font::generate(       FontSize size,
 
     // Make sure we actually have rows to use.
     if (bestRows == nullptr) return false;
+
+    // TODO(Matthew): Don't wanna be calling glGet every font gen... determine and store somewhere are initialisation.
+    // Get maximum texture size allowed by implementation.
+    GLint maxTextureSize;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+
+    // If the best size texture we could get exceeds the largest texture area permitted by the GPU... fail.
+    if (bestWidth * bestHeight > static_cast<ui32>(maxTextureSize * maxTextureSize)) {
+        delete[] bestRows;
+        return false;
+    }
+
+    // Set texture size in font instance.
+    fontInstance.textureSize = ui32v2(bestWidth, bestHeight);
 
     // Generate & bind the texture we will put each glyph into.
     glGenTextures(1, &fontInstance.texture);
@@ -203,17 +211,17 @@ bool spg::Font::generate(       FontSize size,
             glTexSubImage2D(GL_TEXTURE_2D, 0, currentU, currentV, glyphSurface->w, glyphSurface->h, GL_BGRA, GL_UNSIGNED_BYTE, glyphSurface->pixels);
 
             // Build the UV dimensions for the glyph.
-            fontInstance.glyphs[charIndex].uvDimensions.x = (currentU / bestWidth);
-            fontInstance.glyphs[charIndex].uvDimensions.y = (currentV / bestHeight);
-            fontInstance.glyphs[charIndex].uvDimensions.z = (glyphSurface->w / bestWidth);
-            fontInstance.glyphs[charIndex].uvDimensions.w = (glyphSurface->h / bestHeight);
+            fontInstance.glyphs[charIndex].uvDimensions.x =        (static_cast<f32>(currentU) / static_cast<f32>(bestWidth));
+            fontInstance.glyphs[charIndex].uvDimensions.y =        (static_cast<f32>(currentV) / static_cast<f32>(bestHeight));
+            fontInstance.glyphs[charIndex].uvDimensions.z = (static_cast<f32>(glyphSurface->w) / static_cast<f32>(bestWidth));
+            fontInstance.glyphs[charIndex].uvDimensions.w = (static_cast<f32>(glyphSurface->h) / static_cast<f32>(bestHeight));
+
+            // Update currentU.
+            currentU += glyphSurface->w + padding;
 
             // Free the glyph "surface".
             SDL_FreeSurface(glyphSurface);
             glyphSurface = nullptr;
-
-            // Update currentU.
-            currentU += glyphSurface->w + padding;
         }
         // Update currentV.
         currentV += bestRows[rowIndex].first + padding;
@@ -223,7 +231,7 @@ bool spg::Font::generate(       FontSize size,
     glBindTexture(GL_TEXTURE_2D, 0);
     delete[] bestRows;
 
-    TTF_CloseFont(font);
+    // TTF_CloseFont(font);
 
     // Insert our font instance.
     m_fontInstances.emplace(std::make_pair(hash(size, style, renderStyle), fontInstance));

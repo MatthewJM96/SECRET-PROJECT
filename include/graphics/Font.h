@@ -74,8 +74,11 @@ namespace SecretProject {
             ui32   height;
             Glyph* glyphs;
             Font*  owner;
+            ui32v2 textureSize;
+
+            bool saveAsPng(const char* name);
         };
-        const FontInstance NIL_FONT_INSTANCE = { 0, 0, nullptr, nullptr };
+        const FontInstance NIL_FONT_INSTANCE = { 0, 0, nullptr, nullptr, ui32v2(0) };
 
         /**
          * @brief Whether the string should be sized (vertically) by a scale factor or target a fixed pixel height.
