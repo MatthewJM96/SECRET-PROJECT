@@ -308,10 +308,9 @@ void spg::SpriteBatcher::drawString(StringComponents components,
                 currentPos.y += lineHeight;
                 continue;
             }
-
-            // TODO(Matthew): Handle unsupported characters better?
             // If character is unsupported, skip.
-            if (character < start || character > end) continue;
+            if (character < start || character > end ||
+                    !font.glyphs[characterIndex].supported) continue;
 
             // Skip non-newline characters once out of bounds of our rectangle.
             if (currentPos.x > rect.z) continue;
