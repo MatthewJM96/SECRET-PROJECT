@@ -88,11 +88,11 @@ int main(int, char*[]) {
 
     // Begin the drawing mode of the sprite batcher, draw 10 sprites, then end the draw mode - at which point the sprites are sorted and turned into batches for rendering.
     sb.begin();
-    // TODO(Matthew): Need to enable specifying clip rect AND position!
-    sb.drawString("Hello, World!", f32v4(0.0f, 0.0f, 1200.0f, 800.0f), { spg::StringSizingKind::SCALED, { f32v2(1.0f, 1.0f) } }, { 189, 34, 203, 255 }, "Orbitron", 40);
+    sb.drawString("Hello, World!", f32v4(40.0f, 40.0f, 1120.0f, 720.0f), { spg::StringSizingKind::SCALED, { f32v2(1.0f, 1.0f) } }, { 0, 50, 128, 255 }, "Orbitron", 40, TextAlign::TOP_LEFT);
     for (size_t i = 0; i < 10; ++i) {
-        sb.draw(0, f32v2(80.0f + 40.0f * static_cast<f32>(i), 80.0f + 40.0f * static_cast<f32>(i)), f32v2(40.0f, 40.0f), { static_cast<ui8>(20 * i), 50, 128, 255 });
+        sb.draw(0, f32v2(350.0f + 40.0f * static_cast<f32>(i), 140.0f + 40.0f * static_cast<f32>(i)), f32v2(40.0f, 40.0f), { static_cast<ui8>(20 * i), 50, 128, 255 });
     }
+    sb.drawString("Bye, World!", f32v4(800.0f, 600.0f, 400.0f, 200.0f), { spg::StringSizingKind::SCALED, { f32v2(1.0f, 1.0f) } }, { 200, 50, 128, 255 }, "Orbitron", 40);
     sb.end();
 
     while (true) {
