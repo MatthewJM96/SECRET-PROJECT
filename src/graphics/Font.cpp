@@ -111,13 +111,30 @@ bool spg::Font::generate(       FontSize size,
         for (char c = m_start; c <= m_end; ++c) {
             fontInstance.glyphs[i].character = c;
 
+            // Check that the glyph we are currently seeking actually gets provided
+            // by the font in question.
+            if (TTF_GlyphIsProvided(font, c) == 0) {
+                fontInstance.glyphs[i].supported = false;
+
+                ++i;
+                continue;
+            }
+
+            // We will fill this with the glyph metrics, namely min & max values of
+            // the X & Y coords of the font.
+            //     metrics.x & metrics.y correspond to min & max X respectively.
+            //     metrics.z & metrics.w correspond to min & max Y respectively.
             i32v4 metrics;
 
             TTF_GlyphMetrics(font, c, &metrics.x, &metrics.y,
                                     &metrics.z, &metrics.w, nullptr);
 
+            // Calculate the glyph's sizes from the metric.
             fontInstance.glyphs[i].size.x = metrics.y - metrics.x;
             fontInstance.glyphs[i].size.y = metrics.w - metrics.z;
+
+            // Given we got here, the glyph is supported.
+            fontInstance.glyphs[i].supported = true;
 
             ++i;
         }
@@ -134,6 +151,9 @@ bool spg::Font::generate(       FontSize size,
     ui32 bestRowCount = 0;
     Row* bestRows = nullptr;
     while (rowCount <= static_cast<ui32>(m_end - m_start)) {
+        // WARNING: We may be packing too tightly here. The reported height of glyphs from TTF_GlyphMetrics
+        //          is not always accurate to the rendered dimensions.
+
         // Generate rows for the current row count, getting the width and height of the rectangle
         // they form.
         ui32 currentWidth, currentHeight;
@@ -185,6 +205,12 @@ bool spg::Font::generate(       FontSize size,
     // Set the texture's size and pixel format.
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bestWidth, bestHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R,     GL_REPEAT);
+
     // This represents the current V-coordinate we are into the texture.
     //    UV are the coordinates we use for textures (i.e. the X & Y coords of the pixels).
     ui32 currentV = padding;
@@ -195,6 +221,9 @@ bool spg::Font::generate(       FontSize size,
         ui32 currentU = padding;
         for (size_t glyphIndex = 0; glyphIndex < bestRows[rowIndex].second.size(); ++glyphIndex) {
             ui32 charIndex = bestRows[rowIndex].second[glyphIndex];
+
+            // If the glyph is unsupported, skip it!
+            if (!fontInstance.glyphs[charIndex].supported) continue;
 
             // Determine which render style we are to use and draw the glyph.
             SDL_Surface* glyphSurface = nullptr;
@@ -209,6 +238,11 @@ bool spg::Font::generate(       FontSize size,
 
             // Stitch the glyph we just generated into our texture.
             glTexSubImage2D(GL_TEXTURE_2D, 0, currentU, currentV, glyphSurface->w, glyphSurface->h, GL_BGRA, GL_UNSIGNED_BYTE, glyphSurface->pixels);
+
+            // Update the size of the glyph with what we rendered - there can be variance between this and what we obtained
+            // in the glyph metric stage!
+            fontInstance.glyphs[charIndex].size.x = static_cast<f32>(glyphSurface->w);
+            fontInstance.glyphs[charIndex].size.y = static_cast<f32>(glyphSurface->h);
 
             // Build the UV dimensions for the glyph.
             fontInstance.glyphs[charIndex].uvDimensions.x =        (static_cast<f32>(currentU) / static_cast<f32>(bestWidth));
@@ -231,8 +265,9 @@ bool spg::Font::generate(       FontSize size,
     glBindTexture(GL_TEXTURE_2D, 0);
     delete[] bestRows;
 
-    // TODO(Matthew): We really want to be able to close the font... but it just won't bloody close.
-    // TTF_CloseFont(font);
+    // Note that this can fail for seemingly little reason.
+    //     For example, if one tries to get glyph metrics for a character not provided.
+    TTF_CloseFont(font);
 
     // Insert our font instance.
     m_fontInstances.emplace(std::make_pair(hash(size, style, renderStyle), fontInstance));
@@ -267,6 +302,9 @@ spg::Font::Row* spg::Font::generateRows(Glyph* glyphs, ui32 rowCount, FontSize p
     // For each character, we now determine which row to put it in, updating the width and
     // height variables as we go.
     for (ui32 i = 0; i < static_cast<ui32>(m_end - m_start); ++i) {
+        // Skip unsupported glyphs.
+        if (!glyphs[i].supported) continue;
+
         // Determine which row currently has the least width: this is the row we will add
         // the currently considered glyph to.
         size_t bestRow = 0;
