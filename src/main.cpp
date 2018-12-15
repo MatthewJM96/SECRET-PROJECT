@@ -57,6 +57,14 @@ int main(int, char*[]) {
     glClearColor(0.2f, 0.7f, 0.3f, 1.0f);
     glClearDepth(1.0);
 
+    // // Enable blending.
+    //     Blending is how OpenGL handles transparency in textures.
+    glEnable(GL_BLEND);
+    // Tell OpenGL to blend the colour currently stored for that pixel in the framebuffer with a new transparent texture by
+    // multiplying each (colour & alpha) channel of the texture by the (normalised) value in its alpha channel and multiplying
+    // the each channel of the colour currently stored for that pixel by 1 - that alpha value.
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+
     // Set SDL to use double buffering, this means the GPU has two framebuffers - which are the arrays of pixel colours (i.e. what get sent to our physical monitor to be drawn).
     //   By using two framebuffers, we can simultaneously have one being drawn to on the GPU and one being sent to the monitor to be displayed.
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -68,7 +76,7 @@ int main(int, char*[]) {
 
     // Create a font cache and load a test font.
     spg::FontCache fontCache;
-    fontCache.registerFont("Orbitron", "fonts/orbitron_bold-webfont.ttf");
+    fontCache.registerFont("Orbitron", "fonts/Orbitron-Bold.ttf");
 
     // Save our font REAL BIG.
     fontCache.fetchFontInstance("Orbitron", 80).saveAsPng("debug/orbitron.png");
@@ -80,9 +88,10 @@ int main(int, char*[]) {
 
     // Begin the drawing mode of the sprite batcher, draw 10 sprites, then end the draw mode - at which point the sprites are sorted and turned into batches for rendering.
     sb.begin();
+    // TODO(Matthew): Need to enable specifying clip rect AND position!
     sb.drawString("Hello, World!", f32v4(0.0f, 0.0f, 1200.0f, 800.0f), { spg::StringSizingKind::SCALED, { f32v2(1.0f, 1.0f) } }, { 189, 34, 203, 255 }, "Orbitron", 40);
     for (size_t i = 0; i < 10; ++i) {
-        sb.draw(0, f32v2(40.0f * static_cast<f32>(i), 40.0f * static_cast<f32>(i)), f32v2(40.0f, 40.0f), { static_cast<ui8>(20 * i), 50, 128, 255 });
+        sb.draw(0, f32v2(80.0f + 40.0f * static_cast<f32>(i), 80.0f + 40.0f * static_cast<f32>(i)), f32v2(40.0f, 40.0f), { static_cast<ui8>(20 * i), 50, 128, 255 });
     }
     sb.end();
 
