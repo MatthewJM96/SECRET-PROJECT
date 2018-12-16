@@ -86,6 +86,8 @@ int main(int, char*[]) {
     sb.init(&fontCache);
     sb.reserve(10);
 
+    // TODO(Matthew): Right now we are getting alloc errors from SDL when rendering a second font (weirdly that is smaller rather  than larger): investigate!
+
     // Begin the drawing mode of the sprite batcher, draw 10 sprites, then end the draw mode - at which point the sprites are sorted and turned into batches for rendering.
     sb.begin();
 
