@@ -190,7 +190,7 @@ namespace SecretProject {
             bool generate(       FontSize size,
                                 FontStyle style       = FontStyle::NORMAL,
                           FontRenderStyle renderStyle = FontRenderStyle::BLENDED ) {
-                return generate(size, size / 8, style, renderStyle);
+                return generate(size, (size / 8) + 2, style, renderStyle);
             }
             /**
              * @brief Generates a texture atlas of glyphs with the default render style, font style and font size.
