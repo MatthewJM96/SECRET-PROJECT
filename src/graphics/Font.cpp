@@ -89,7 +89,7 @@ bool spg::Font::generate(       FontSize size,
     // This is the font instance we will build up as we generate the texture atlas.
     FontInstance fontInstance{};
     // Create the glyphs array for this font instance.
-    fontInstance.glyphs = new Glyph[m_end - m_start];
+    fontInstance.glyphs = new Glyph[m_end - m_start + 1];
     // Set this as the font instance's owner.
     fontInstance.owner = this;
 
