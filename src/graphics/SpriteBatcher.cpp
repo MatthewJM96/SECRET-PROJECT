@@ -335,8 +335,7 @@ void spg::SpriteBatcher::drawString(StringComponents components,
                                            TextAlign align /*= TextAlign::TOP_LEFT*/,
                                             WordWrap wrap  /*= WordWrap::NONE*/,
                                                  f32 depth /*= 0.0f*/) {
-    // TODO(Matthew): Implement actual string draw. (OH GOD PLEASE HELP ME)
-    (void) wrap;
+    // TODO(Matthew): Implement greedy & minimum raggedness word wrap.
 
     // We will populate these data points for drawing later.
     DrawableLines lines;
@@ -383,7 +382,7 @@ void spg::SpriteBatcher::drawString(StringComponents components,
 
                 // If we have overflowed the rectangle, break out, otherwise populate
                 // a new line.
-                if (totalHeight > rect.w) {
+                if (totalHeight + lines.back().height > rect.w) {
                     verticalOverflow = true;
                     break;
                 } else {
@@ -395,20 +394,46 @@ void spg::SpriteBatcher::drawString(StringComponents components,
             if (character < start || character > end ||
                     !font.glyphs[characterIndex].supported) continue;
 
+            // Determine character width after scaling.
+            f32 characterWidth = font.glyphs[characterIndex].size.x * scaling.x;
+
+            // TODO(Matthew): It would be preferred behaviours (but perhaps too taxing?) to account for
+            //                centered and right-aligned text here.
+            // TODO(Matthew): Auto-hyphenate if this & preceeding character are neither whitespace.
             // Skip non-newline characters once out of bounds of our rectangle.
-            if (lines.back().length > rect.z) continue;
+            if (lines.back().length + characterWidth > rect.z) {
+                if (wrap == WordWrap::NONE) {
+                    continue;
+                } else {
+                    totalHeight += lines.back().height;
+                    lines.emplace_back(DrawableLine{ 0.0f, height, std::vector<DrawableGlyph>() });
+
+                    // TODO(Matthew): We can probably do this more smartly.
+                    // If we will likely overflow the rectangle on the next line, break out, otherwise populate
+                    // a new line.
+                    if (totalHeight + lines.back().height > rect.w) {
+                        verticalOverflow = true;
+                        break;
+                    } else {
+                        // Make sure to revisit this character if not whitespace.
+                        if (character != ' ') {
+                            --i;
+                        }
+                        continue;
+                    }
+                }
+            }
 
             // If the line's height is less than the height of this font instance, and we're about to add a
             // glyph from this font instance, then the line's height needs setting to the font instances's.
             if (lines.back().height < height) lines.back().height = height;
 
-            // Determine character width after scaling.
-            f32 characterWidth = font.glyphs[characterIndex].size.x * scaling.x;
-
             // For centered alignments, we would have to emplace back a drawable glyph and then draw later.
             lines.back().drawables.emplace_back(DrawableGlyph{ &font.glyphs[characterIndex], lines.back().length, scaling, tint, font.texture });
             lines.back().length += characterWidth;
         }
+
+        if (verticalOverflow) break;
     }
     // Update the total height for last line.
     totalHeight += lines.back().height;
@@ -419,7 +444,7 @@ void spg::SpriteBatcher::drawString(StringComponents components,
 
         for (auto& drawable : line.drawables) {
             f32v2 size         = drawable.glyph->size * drawable.scaling;
-            f32v2 position     = f32v2(drawable.xPos, currentY) + offsets + f32v2(rect.x, rect.y) + f32v2(0.0f, line.height - drawable.glyph->size.y);
+            f32v2 position     = f32v2(drawable.xPos, currentY) + offsets + f32v2(rect.x, rect.y) + f32v2(0.0f, line.height - size.y);
             f32v4 uvDimensions = drawable.glyph->uvDimensions;
 
             clip(rect, position, size, uvDimensions);
