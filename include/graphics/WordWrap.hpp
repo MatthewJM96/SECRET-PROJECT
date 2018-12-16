@@ -15,11 +15,17 @@
 /**
  * @brief This enum is of the various ways in which text may be wrapped.
  *
- * GREEDY is the quickest of the two wrapped modes, but has the least uniformity of line lengths.
- * MINIMUM_RAGGEDNESS seeks to minimise the difference in line lengths rather than time taken to calculate.
+ * QUICK is the quickest of the wrap modes, where it breaks immediately before the first character to exceed the rectangle and simply
+ *     hyphenates if a non-whitespace character preceeds this overflowing character.
+ *
+ * GREEDY only breaks on whitespace or \n characters. While quicker than MINIMUM_RAGGEDNESS, it has the less uniformity of line lengths.
+ *
+ * MINIMUM_RAGGEDNESS breaks on the same characters as GREEDY but seeks to minimise the difference in line lengths rather than time taken
+ *     to calculate.
  */
 enum class WordWrap {
     NONE,
+    QUICK,
     GREEDY,
     MINIMUM_RAGGEDNESS
 };
