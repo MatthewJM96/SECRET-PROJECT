@@ -79,14 +79,12 @@ int main(int, char*[]) {
     fontCache.registerFont("Orbitron", "fonts/Orbitron-Bold.ttf");
 
     // Save our font REAL BIG.
-    // fontCache.fetchFontInstance("Orbitron", 80).saveAsPng("debug/orbitron.png");
+    fontCache.fetchFontInstance("Orbitron", 80).saveAsPng("debug/orbitron.png");
 
     // Create a test sprite batcher, initialise it and reserve space for 10 sprites.
     spg::SpriteBatcher sb;
     sb.init(&fontCache);
     sb.reserve(10);
-
-    // TODO(Matthew): Right now we are getting alloc errors from SDL when rendering a second font (weirdly that is smaller rather  than larger): investigate!
 
     // Begin the drawing mode of the sprite batcher, draw 10 sprites, then end the draw mode - at which point the sprites are sorted and turned into batches for rendering.
     sb.begin();
@@ -99,7 +97,7 @@ int main(int, char*[]) {
 
     sb.drawString("Bye, World!", f32v4(800.0f, 600.0f, 400.0f, 200.0f), { spg::StringSizingKind::SCALED, { f32v2(1.0f, 1.0f) } }, { 200, 50, 128, 255 }, "Orbitron", 40);
 
-    sb.drawString("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", f32v4(40.0f, 400.0f, 500.0f, 300.0f), { spg::StringSizingKind::SCALED, { f32v2(0.7f, 0.7f) } }, { 124, 87, 20, 255 }, "Orbitron", 40, TextAlign::TOP_LEFT, WordWrap::GREEDY);
+    sb.drawString("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", f32v4(40.0f, 400.0f, 500.0f, 300.0f), { spg::StringSizingKind::SCALED, { f32v2(0.7f, 0.7f) } }, { 124, 87, 20, 255 }, "Orbitron", 14, TextAlign::TOP_LEFT, WordWrap::GREEDY);
 
     sb.end();
 
