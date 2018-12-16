@@ -281,7 +281,7 @@ spg::FontInstance spg::Font::getFontInstance(       FontSize size,
                                              FontRenderStyle renderStyle /*= FontRenderStyle::BLENDED*/) {
     try {
         return m_fontInstances.at(hash(size, style, renderStyle));
-    } catch (std::out_of_range e) {
+    } catch (std::out_of_range& e) {
         return NIL_FONT_INSTANCE;
     }
 }
