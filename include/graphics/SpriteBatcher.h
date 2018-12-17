@@ -15,7 +15,7 @@
 #include "graphics/Font.h"
 #include "graphics/GLSLProgram.h"
 #include "graphics/Gradients.hpp"
-#include "graphics/TextAlign.hpp"
+#include "graphics/TextAlign.h"
 #include "graphics/WordWrap.hpp"
 
 namespace SecretProject {
