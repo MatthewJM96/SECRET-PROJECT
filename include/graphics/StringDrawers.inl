@@ -10,14 +10,20 @@
 
 namespace SecretProject {
     namespace graphics {
+        /**
+         * @brief The data needed to draw a glyph.
+         */
         struct DrawableGlyph {
-            Glyph* glyph;
-            f32         xPos;
-            f32v2       scaling;
-            colour4     tint;
-            GLuint      texture;
+            Glyph*  glyph;
+            f32     xPos;
+            f32v2   scaling;
+            colour4 tint;
+            GLuint  texture;
         };
 
+        /**
+         * @brief The data needed to draw a line.
+         */
         struct DrawableLine {
             f32 length;
             f32 height;
@@ -25,6 +31,21 @@ namespace SecretProject {
         };
         using DrawableLines = std::vector<DrawableLine>;
 
+
+
+        /******************************************************\
+         * No Wrap Draw                                       *
+        \******************************************************/
+
+        /**
+         * @brief Draws a string with no wrapping.
+         *
+         * @param batcher The sprite batcher to draw the string to.
+         * @param components The string components to draw.
+         * @param rect The bounding rectangle the string must be kept within.
+         * @param align The alignment for the text.
+         * @param depth The depth at which to render the string.
+         */
         inline void drawNoWrapString(SpriteBatcher* batcher, StringComponents components, f32v4 rect, TextAlign align, f32 depth) {
             // We will populate these data points for drawing later.
             DrawableLines lines;
@@ -127,6 +148,21 @@ namespace SecretProject {
             }
         }
 
+
+
+        /******************************************************\
+         * Quick Wrap Draw                                    *
+        \******************************************************/
+
+        /**
+         * @brief Draws a string with quick wrapping.
+         *
+         * @param batcher The sprite batcher to draw the string to.
+         * @param components The string components to draw.
+         * @param rect The bounding rectangle the string must be kept within.
+         * @param align The alignment for the text.
+         * @param depth The depth at which to render the string.
+         */
         inline void drawQuickWrapString(SpriteBatcher* batcher, StringComponents components, f32v4 rect, TextAlign align, f32 depth) {
             // We will populate these data points for drawing later.
             DrawableLines lines;
@@ -180,16 +216,6 @@ namespace SecretProject {
 
                     // Determine character width after scaling.
                     f32 characterWidth = font.glyphs[characterIndex].size.x * scaling.x;
-
-                    /*******************\
-                     * IMPORTANT TODO! *
-                    \*******************/
-                    // TODO(Matthew): Need to make sure to check if character going to new line is punctuation such
-                    //                as '.' or ',' or '!' and break the entire preceeding word onto the new line.
-                    //                    One implementation, likely the fastest, would be to do lookahead at the
-                    //                    start of each word storing index of beginning and length (index & size)
-                    //                    in some way stepping forward until whitespace and determining if the entire thing fits
-                    //                    on the line or not.
 
                     // Given we are about to add a character, make sure it fits on the line, if not, make
                     // a new line and if the about-to-be-added character isn't a whitespace revisit it.
@@ -252,6 +278,21 @@ namespace SecretProject {
             }
         }
 
+
+
+        /******************************************************\
+         * Greedy Wrap Draw                                   *
+        \******************************************************/
+
+        /**
+         * @brief Draws a string with greedy wrapping.
+         *
+         * @param batcher The sprite batcher to draw the string to.
+         * @param components The string components to draw.
+         * @param rect The bounding rectangle the string must be kept within.
+         * @param align The alignment for the text.
+         * @param depth The depth at which to render the string.
+         */
         inline void drawGreedyWrapString(SpriteBatcher* batcher, StringComponents components, f32v4 rect, TextAlign align, f32 depth) {
             // We will populate these data points for drawing later.
             DrawableLines lines;
