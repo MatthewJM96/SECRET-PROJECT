@@ -195,6 +195,16 @@ namespace SecretProject {
                     height = sizing.targetHeight;
                 }
 
+                // auto hyphenate = [&]() {
+                //     char   hyphen = '-';
+                //     size_t index  = static_cast<size_t>(hyphen) - static_cast<size_t>(start);
+
+                //     f32 characterWidth = font.glyphs[index].size.x * scaling.x;
+
+                //     lines.back().drawables.emplace_back(DrawableGlyph{ &font.glyphs[index], lines.back().length, scaling, tint, font.texture });
+                //     lines.back().length += characterWidth;
+                // };
+
                 // Gets set to true if we go out of the height of the rect.
                 bool verticalOverflow = false;
                 // Iterate over this component's string.
@@ -225,6 +235,7 @@ namespace SecretProject {
 
                         // Make sure to revisit this character if not whitespace.
                         if (character != ' ') {
+                            // hyphenate();
                             --i;
                         }
                         continue;
