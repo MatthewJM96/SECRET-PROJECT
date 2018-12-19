@@ -463,6 +463,17 @@ namespace SecretProject {
         \******************************************************/
 
         /**
+         * @brief Data needed for each word in a text.
+         */
+        struct Word {
+            ui64 start   : 31;
+            ui64 end     : 31;
+            ui64 newline :  1;
+            ui64 hyphen  :  1;
+            f32  length;
+        };
+
+        /**
          * @brief Draws a string with greedy wrapping.
          *
          * @param batcher The sprite batcher to draw the string to.
@@ -472,19 +483,74 @@ namespace SecretProject {
          * @param depth The depth at which to render the string.
          */
         // inline void drawMinRagWrapString(SpriteBatcher* batcher, StringComponents components, f32v4 rect, TextAlign align, f32 depth) {
-        //     std::vector<std::vector<const char*>> words;
+        //     std::vector<std::vector<Word>> words;
         //     words.resize(components.size());
 
-        //     for (auto& component : components) {
-        //         const char* str = component.first;
+        //     // Split the string of each component into their costituent words in preparation for calculating the appropriate
+        //     // construction of lines to minimise the raggedness.
+        //     for (size_t i = 0; i < words.size(); ++i) {
+        //         auto& component = components[i];
+
+        //         // Simplify some component property names.
+        //         const char*  str    = component.first;
+        //         FontInstance font   = component.second.fontInstance;
+        //         StringSizing sizing = component.second.sizing;
+
+        //         char start = font.owner->getStart();
+        //         char end   = font.owner->getEnd();
+
+        //         // Process sizing into a simple scale factor.
+        //         f32v2 scaling;
+        //         f32   height;
+        //         if (sizing.kind == StringSizingKind::SCALED) {
+        //             scaling = sizing.scaling;
+        //             height  = static_cast<f32>(font.height) * scaling.y;
+        //         } else {
+        //             scaling.x = sizing.scaleX;
+        //             scaling.y = sizing.targetHeight / static_cast<f32>(font.height);
+        //             height    = sizing.targetHeight;
+        //         }
 
         //         size_t beginIndex   = 0;
         //         size_t currentIndex = 0;
 
         //         for (; str[currentIndex] != '\0'; ++currentIndex) {
-        //             if (str[currentIndex] == ' ' || str[currentIndex] == '-') {
+        //             Word latest = {
+        //                 currentIndex + 1,
+        //                 currentIndex + 1,
+        //                 0,
+        //                 0,
+        //                 0.0f
+        //             };
 
+        //             // Determine character at current point in string.
+        //             char   character      = str[currentIndex];
+        //             size_t characterIndex = static_cast<size_t>(character) - static_cast<size_t>(start);
+
+        //             // If character is unsupported, skip.
+        //             if (character < start || character > end ||
+        //                     !font.glyphs[characterIndex].supported) continue;
+
+        //             // If we are going to a new line, mark the previous word as such and add it to the list of words for the component.
+        //             if (character == '\n') {
+        //                 latest.newline = 1;
+        //                 words[i].push_back(latest);
+
+        //                 continue;
+        //             // If we are dealing with a hyphen, mark the previous word as being hyphenated.
+        //             } else if (character == '-') {
+        //                 latest.hyphen = 1;
+        //                 words[i].push_back(latest);
+
+        //                 continue;
+        //             } else if (character == ' ') {
+        //                 words[i].push_back(latest);
+
+        //                 continue;
         //             }
+
+        //             // Determine character width after scaling.
+        //             f32 characterWidth = font.glyphs[characterIndex].size.x * scaling.x;
         //         }
         //     }
 
@@ -492,7 +558,7 @@ namespace SecretProject {
         //     // TODO(Matthew): Can we make guesses as to the amount of drawables to reserve for a line? For amount of lines?
 
 
-
+        // }
 
 
 
