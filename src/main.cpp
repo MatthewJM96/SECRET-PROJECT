@@ -80,6 +80,7 @@ int main(int, char*[]) {
 
     // Save our font REAL BIG.
     fontCache.fetchFontInstance("Orbitron", 80).saveAsPng("debug/orbitron.png");
+    fontCache.fetchFontInstance("Orbitron", 80).saveAsBinary("debug/orbitron.bin");
 
     // Create a test sprite batcher, initialise it and reserve space for 10 sprites.
     spg::SpriteBatcher sb;
