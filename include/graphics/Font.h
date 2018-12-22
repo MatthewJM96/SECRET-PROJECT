@@ -77,6 +77,7 @@ namespace SecretProject {
             Font*  owner;
             ui32v2 textureSize;
 
+            bool saveAsBinary(const char* name);
             bool saveAsPng(const char* name);
         };
         const FontInstance NIL_FONT_INSTANCE = { 0, 0, nullptr, nullptr, ui32v2(0) };

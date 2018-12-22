@@ -39,6 +39,21 @@ spg::FontInstanceHash spg::hash(FontSize size, FontStyle style, FontRenderStyle 
     return hash;
 }
 
+bool spg::FontInstance::saveAsBinary(const char* filepath) {
+    // Prepare the pixel buffer.
+    ui8* pixels = new ui8[textureSize.x * textureSize.y * 4];
+
+    // Bind the texture, load it into our buffer, and then unbind it.
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Save the pixels as obtained to the given filepath.
+    return spio::Image::Binary::save(filepath, static_cast<void*>(pixels), textureSize, spio::Image::PixelFormat::RGBA_UI8);
+}
+
 bool spg::FontInstance::saveAsPng(const char* filepath) {
     // Prepare the pixel buffer.
     ui8* pixels = new ui8[textureSize.x * textureSize.y * 4];
@@ -51,7 +66,7 @@ bool spg::FontInstance::saveAsPng(const char* filepath) {
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // Save the pixels as obtained to the given filepath.
-    return spio::Image::save(filepath, static_cast<void*>(pixels), textureSize, spio::Image::PixelFormat::RGBA_UI8);
+    return spio::Image::PNG::save(filepath, static_cast<void*>(pixels), textureSize, spio::Image::PixelFormat::RGBA_UI8);
 }
 
 spg::Font::Font() :
