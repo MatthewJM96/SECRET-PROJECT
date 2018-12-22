@@ -3,30 +3,215 @@
 
 #include <png.h>
 
-/**
- * @brief Converts an spio::Image::PixelFormat value to the corresponding PNG properties.
- *
- * @param format The format to convert.
- *
- * @return The determined PNG properties.
- */
-std::pair<png_byte, png_byte> convertPixelFormat(spio::Image::PixelFormat format) {
-    using spio::Image::PixelFormat;
-    switch (format) {
-        case PixelFormat::RGB_UI8:
-            return { PNG_COLOR_TYPE_RGB, 8 };
-        case PixelFormat::RGB_UI16:
-            return { PNG_COLOR_TYPE_RGB, 16 };
-        case PixelFormat::RGBA_UI8:
-            return { PNG_COLOR_TYPE_RGB_ALPHA, 8 };
-        case PixelFormat::RGBA_UI16:
-            return { PNG_COLOR_TYPE_RGB_ALPHA, 16 };
-        default:
-            return { PNG_COLOR_TYPE_GRAY, 0 };
+/***********************************************************\
+ * Bitmap Implementation                                   *
+\***********************************************************/
+
+namespace SecretProject::io::Image::Binary {
+    const ui8  BIN_TYPE_1  = 'S';
+    const ui8  BIN_TYPE_2  = 'P';
+    const ui32 BIN_VERSION = 1.0;
+
+    /**
+     * @brief The standardised file header for binary storage.
+     */
+    struct BinFileHeader {
+        ui8  type[2]; // The file type - ALWAYS set first byte to 'S' and second to 'P'.
+        ui32 version; // The version of the binary file type used.
+        ui32 size;    // The size of the file in bytes including headers.
+        ui32 offset;  // Offset in bytes to image data (i.e. sum of sizes of the headers).
+    };
+
+    /**
+     * @brief The standardised image header for binary storage.
+     */
+    struct BinImageHeader {
+        ui32 size;              // The size of this header in bytes.
+        ui32 width;             // The width of the image in pixels.
+        ui32 height;            // The height of the image in pixels.
+        ui32 imageSize;         // The image size in bytes (unused for uncompressed - any value for such images is allowed).
+        ui8  pixelFormat;       // The pixel format of the image.
+        ui8  compression;       // The compression used (0 for uncompressed).
+    };
+
+    /**
+     * @brief Converts an spio::Image::PixelFormat value to the corresponding binary properties.
+     *
+     * @param format The format to convert.
+     *
+     * @return The determined PNG properties.
+     */
+    std::pair<ui32, ui32> convertPixelFormat(PixelFormat format) {
+        switch (format) {
+            case PixelFormat::RGB_UI8:
+                return { 3, 1 };
+            case PixelFormat::RGBA_UI8:
+                return { 4, 1 };
+            case PixelFormat::RGB_UI16:
+                return { 3, 2 };
+            case PixelFormat::RGBA_UI16:
+                return { 4, 2 };
+            default:
+                // We don't recognise the pixel format.
+                return { 0, 0 };
+        }
     }
 }
 
-bool spio::Image::save(const char* filepath, const void* data, ui32v2 dimensions, PixelFormat format) {
+bool spio::Image::Binary::load(const char* filepath, void*& data, ui32v2& dimensions, PixelFormat& format) {
+    // Open file, if we can't then fail.
+    FILE* file = fopen(filepath, "rb");
+    if (file == nullptr) return false;
+
+    /**************************************************\
+     * Handle File Header                             *
+    \**************************************************/
+
+    BinFileHeader fileHeader;
+
+    // Read in the file header.
+    size_t read = fread(&fileHeader, 1, sizeof(BinFileHeader), file);
+
+    // If we didn't manage to read in the entire header's worth of information, fail.
+    if (read != sizeof(BinFileHeader)) return false;
+
+    // Fail if file type doesn't match our binary type.
+    if (fileHeader.type[0] != BIN_TYPE_1
+         || fileHeader.type[1] != BIN_TYPE_2) return false;
+
+    // Fail if the file version doesn't match the version we support.
+    if (fileHeader.version != BIN_VERSION) return false;
+
+    /**************************************************\
+     * Handle Image Header                            *
+    \**************************************************/
+
+    BinImageHeader imgHeader;
+
+    // Read in the image header.
+    read = fread(&imgHeader, 1, sizeof(BinImageHeader), file);
+
+    // If we didn't manage to read in the entire header's worth of information, fail.
+    if (read != sizeof(BinImageHeader)) return false;
+
+    // If image header size isn't equal to image header struct, leave - our struct may be malformed.
+    if (imgHeader.size != sizeof(BinImageHeader)) return false;
+
+    /**************************************************\
+     * Extract Image Information                      *
+    \**************************************************/
+
+    // If state pixel format is not of a value less than the PixelFormat sentinel, then it is invalid - leave.
+    if (imgHeader.pixelFormat >= static_cast<ui32>(PixelFormat::SENTINEL)) return false;
+
+    // Obtain pixel format.
+    format = static_cast<PixelFormat>(imgHeader.pixelFormat);
+
+    // Obtain dimensions.
+    dimensions.x = imgHeader.width;
+    dimensions.y = imgHeader.height;
+
+    // Extract pixel information from format.
+    auto [channels, bytesPerChannel] = convertPixelFormat(format);
+
+    // Check the pixel information is valid, if not fail.
+    if (channels == 0 || bytesPerChannel == 0) return false;
+
+    // Determine size of needed pixel buffer and create that buffer.
+    ui32 imageSize = imgHeader.width * imgHeader.height * channels * bytesPerChannel;
+    data = reinterpret_cast<void*>(new ui8[imageSize]);
+
+    // Read pixel data into a buffer.
+    read = fread(data, 1, imageSize, file);
+
+    // If we didn't manage to read in the entire pixel data's worth of information, fail.
+    if (read != imageSize) return false;
+
+    // Close file and return.
+    fclose(file);
+
+    return true;
+}
+
+bool spio::Image::Binary::save(const char* filepath, const void* data, ui32v2 dimensions, PixelFormat format) {
+    // Extract pixel information from format.
+    auto [channels, bytesPerChannel] = convertPixelFormat(format);
+
+    // Determine image size in bytes.
+    ui32 imageSize = channels * bytesPerChannel * dimensions.x * dimensions.y;
+
+    // Set up the image header.
+    BinImageHeader imgHeader;
+
+    imgHeader.size        = sizeof(BinImageHeader);
+    imgHeader.width       = dimensions.x;
+    imgHeader.height      = dimensions.y;
+    imgHeader.imageSize   = imageSize;
+    imgHeader.pixelFormat = static_cast<ui8>(format);
+    imgHeader.compression = 0;
+
+    // Set up the file header.
+    BinFileHeader fileHeader;
+
+    fileHeader.type[0] = BIN_TYPE_1;
+    fileHeader.type[1] = BIN_TYPE_2;
+    fileHeader.version = BIN_VERSION;
+    fileHeader.size    = sizeof(BinFileHeader) + sizeof(BinImageHeader) + imgHeader.imageSize;
+    fileHeader.offset  = sizeof(BinFileHeader) + sizeof(BinImageHeader);
+
+    // Open the file desired, and if we couldn't, fail.
+    FILE* file = fopen(filepath, "wb");
+    if (file == nullptr) return false;
+
+    // Write the file header, if we couldn't, fail.
+    size_t written = fwrite(&fileHeader, 1, sizeof(BinFileHeader), file);
+    if (written != sizeof(BinFileHeader)) return false;
+
+    // Write the image header, if we couldn't, fail.
+    written = fwrite(&imgHeader, 1, sizeof(BinImageHeader), file);
+    if (written != sizeof(BinImageHeader)) return false;
+
+    // Write the data, if we couldn't, fail.
+    written = fwrite(data, 1, imageSize, file);
+    if (written != imageSize) return false;
+
+    // Close the file and return.
+    fclose(file);
+
+    return true;
+}
+
+
+/***********************************************************\
+ * PNG Implementation                                      *
+\***********************************************************/
+
+namespace SecretProject::io::Image::PNG {
+    /**
+     * @brief Converts an spio::Image::PixelFormat value to the corresponding PNG properties.
+     *
+     * @param format The format to convert.
+     *
+     * @return The determined PNG properties.
+     */
+    std::pair<png_byte, png_byte> convertPixelFormat(spio::Image::PixelFormat format) {
+        using spio::Image::PixelFormat;
+        switch (format) {
+            case PixelFormat::RGB_UI8:
+                return { PNG_COLOR_TYPE_RGB, 8 };
+            case PixelFormat::RGB_UI16:
+                return { PNG_COLOR_TYPE_RGB, 16 };
+            case PixelFormat::RGBA_UI8:
+                return { PNG_COLOR_TYPE_RGB_ALPHA, 8 };
+            case PixelFormat::RGBA_UI16:
+                return { PNG_COLOR_TYPE_RGB_ALPHA, 16 };
+            default:
+                return { PNG_COLOR_TYPE_GRAY, 0 };
+        }
+    }
+}
+
+bool spio::Image::PNG::save(const char* filepath, const void* data, ui32v2 dimensions, PixelFormat format) {
     // Open the image file we will save to.
     FILE* file = fopen(filepath, "wb");
     // Check we successfully opened the file.
