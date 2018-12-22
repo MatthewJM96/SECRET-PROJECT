@@ -514,15 +514,28 @@ namespace SecretProject {
         //         size_t beginIndex   = 0;
         //         size_t currentIndex = 0;
 
-        //         for (; str[currentIndex] != '\0'; ++currentIndex) {
-        //             Word latest = {
+        //         // Estabilsh the Word object we will use to building each
+        //         // word in the component string.
+        //         Word latest = {
+        //             0,
+        //             0,
+        //             0,
+        //             0,
+        //             0.0f
+        //         };
+
+        //         // Simple function to reset the latest Word object.
+        //         auto resetLatest = [&]() {
+        //             latest = {
         //                 currentIndex + 1,
         //                 currentIndex + 1,
         //                 0,
         //                 0,
         //                 0.0f
         //             };
+        //         }
 
+        //         for (; str[currentIndex] != '\0'; ++currentIndex) {
         //             // Determine character at current point in string.
         //             char   character      = str[currentIndex];
         //             size_t characterIndex = static_cast<size_t>(character) - static_cast<size_t>(start);
@@ -531,27 +544,45 @@ namespace SecretProject {
         //             if (character < start || character > end ||
         //                     !font.glyphs[characterIndex].supported) continue;
 
-        //             // If we are going to a new line, mark the previous word as such and add it to the list of words for the component.
+        //             //// For any of the breakable characters, add the current word to the list of words
+        //             //// and prepare to accept a get the next word.
+        //             // If we are going to a new line, mark the next word as such.
         //             if (character == '\n') {
+        //                 words[i].push_back(latest);
+
+        //                 resetLatest();
+
         //                 latest.newline = 1;
-        //                 words[i].push_back(latest);
 
         //                 continue;
-        //             // If we are dealing with a hyphen, mark the previous word as being hyphenated.
+        //             // If we are dealing with a hyphen, mark the next word as being hyphenated.
         //             } else if (character == '-') {
-        //                 latest.hyphen = 1;
         //                 words[i].push_back(latest);
 
+        //                 resetLatest();
+
+        //                 latest.hyphen = 1;
+
+        //                 size_t index   = static_cast<size_t>('-') - static_cast<size_t>(start);
+        //                 latest.length += font.glyphs[index].size.x * scaling.x;
+
         //                 continue;
+        //             // If we are just dealing with a new word, don't do anything extra.
         //             } else if (character == ' ') {
         //                 words[i].push_back(latest);
+
+        //                 resetLatest();
 
         //                 continue;
         //             }
 
-        //             // Determine character width after scaling.
-        //             f32 characterWidth = font.glyphs[characterIndex].size.x * scaling.x;
+        //             // Increment end index of word.
+        //             ++latest.end;
+        //             // Determine character width after scaling and increment word length by it.
+        //             latest.length += font.glyphs[characterIndex].size.x * scaling.x;
         //         }
+
+        //         //
         //     }
 
         //     std::vector<std::vector<f32>> displacements;
