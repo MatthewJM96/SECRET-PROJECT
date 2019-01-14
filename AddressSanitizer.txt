@@ -1,0 +1,11 @@
+If we are getting weird bugs, we can use AddressSanitizer to see if it's something we're doing that's hard to spot.
+
+To use it, add -fsanitize=address -fno-omit-frame-pointer to compilation flags, and then run the executable.
+
+For symbols (function names), we need to set the path to a symboliser.
+
+On Linux, this is requires installing LLVM and thus we would run:
+
+ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer ./build_x86/launch-SECRET_PROJECT.sh
+
+(Note that the path to the symboliser could differ from the above.)
