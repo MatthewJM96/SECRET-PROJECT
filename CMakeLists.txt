@@ -47,7 +47,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
     # Add a whole bunch of warnings and specify the standard to compile against.
     # Further, ensure that warnings are treated as errors.
     set(CMAKE_C_FLAGS "-Wall -Wextra -Werror -Wshadow -Wformat=2 -std=c17")
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wold-style-cast -Wshadow -Wformat=2 -std=c++17")
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wold-style-cast -Wshadow -Wformat=2 -std=c++17 ")
     # Add some warnings that are only supported by one of g++ or clang.
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wduplicated-cond")
@@ -136,10 +136,12 @@ set(SP_graphics_src
 )
 
 set(SP_io_include
+    include/io/DirectorySearcher.h
     include/io/FileLoader.h
     include/io/ImageIO.h
 )
 set(SP_io_src
+    src/io/DirectorySearcher.cpp
     src/io/FileLoader.cpp
     src/io/ImageIO.cpp
 )
@@ -169,6 +171,18 @@ target_link_libraries(
     glm
     PNG::png
 )
+# Need to link filesystem definitions.
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    target_link_libraries(
+        SECRET_PROJECT
+        stdc++fs
+    )
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    target_link_libraries(
+        SECRET_PROJECT
+        c++fs
+    )
+endif()
 
 # Create launchers for the target.
 include(CreateLaunchers)

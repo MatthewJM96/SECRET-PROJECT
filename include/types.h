@@ -152,4 +152,7 @@ struct colour4 {
 #define M_PI   M_TAU / 2.0
 #define M_PIF  M_TAUF / 2.0f
 
+// Useful to mark output parameters.
+#define OUT /* Will be modified as an output parameter. */
+
 #endif // !defined(SP_Types_h__)

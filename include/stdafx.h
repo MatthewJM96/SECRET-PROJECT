@@ -15,6 +15,11 @@
 
 // IO
 #include <cstdio>
+#include <filesystem>
+
+namespace std {
+    namespace fs = std::filesystem;
+}
 
 // Utilities
 #include <algorithm>
